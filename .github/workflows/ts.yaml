@@ -29,13 +29,18 @@ jobs:
           node-version: 20
       - run: corepack enable pnpm
       - run: pnpm i
-      - run: pnpm test
+      - run: pnpm run test --reporters=default --reporters=jest-junit
       - run: pnpm build
-
-      - name: e2e-test
+      - name: Run int128/parallel-test-action
         uses: ./
         with:
-          name: foo
+          test-report-branch: ${{ github.event.pull_request.head.ref }}
+          test-report-artifact-name-prefix: test-report-
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-report-0
+          path: junit.xml
 
   generate:
     runs-on: ubuntu-latest

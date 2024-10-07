@@ -1,10 +1,18 @@
 import * as core from '@actions/core'
+import { getOctokit } from './github'
+import { downloadTestReports } from './artifact'
 
 type Inputs = {
-  name: string
+  testReportBranch: string
+  testReportArtifactNamePrefix: string
+  owner: string
+  repo: string
+  token: string
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export const run = async (inputs: Inputs): Promise<void> => {
-  core.info(`my name is ${inputs.name}`)
+  const octokit = getOctokit(inputs.token)
+
+  core.info(`Downloading test reports on branch ${inputs.testReportBranch}`)
+  await downloadTestReports(octokit, inputs)
 }

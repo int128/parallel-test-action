@@ -2,8 +2,14 @@ name: typescript-action
 description: Template of TypeScript Action
 
 inputs:
-  name:
-    description: example input
+  test-report-branch:
+    description: Branch to find the test report artifacts
+    required: true
+  test-report-artifact-name-prefix:
+    description: Prefix of the test report artifact name
+    required: true
+  token:
+    description: GitHub token
     required: true
 
 runs:
