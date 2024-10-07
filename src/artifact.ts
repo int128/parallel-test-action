@@ -8,6 +8,7 @@ type Inputs = {
   testReportArtifactNamePrefix: string
   owner: string
   repo: string
+  token: string
 }
 
 export const downloadTestReports = async (octokit: Octokit, inputs: Inputs) => {
@@ -19,7 +20,14 @@ export const downloadTestReports = async (octokit: Octokit, inputs: Inputs) => {
 
   const artifactClient = new DefaultArtifactClient()
   for (const testReportArtifact of testReportArtifacts) {
-    await artifactClient.downloadArtifact(testReportArtifact.id)
+    await artifactClient.downloadArtifact(testReportArtifact.id, {
+      findBy: {
+        repositoryOwner: inputs.owner,
+        repositoryName: inputs.repo,
+        token: inputs.token,
+        workflowRunId: testReportArtifact.workflow_run?.id ?? 0,
+      },
+    })
   }
 }
 
