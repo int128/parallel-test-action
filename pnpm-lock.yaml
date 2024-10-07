@@ -49,7 +49,7 @@ importers:
         specifier: 29.7.0
         version: 29.7.0(@types/node@20.16.10)
       jest-junit:
-        specifier: ^16.0.0
+        specifier: 16.0.0
         version: 16.0.0
       prettier:
         specifier: 3.3.3
