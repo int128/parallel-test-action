@@ -33,4 +33,9 @@ export const run = async (inputs: Inputs): Promise<void> => {
     const junitXml = parseJunitXml(xml)
     core.info(`Parsed ${testReportFile}: ${JSON.stringify(junitXml, null, 2)}`)
   }
+
+  // TODO: Calculate the time per test file
+  // TODO: Split the test files into shards
+  // TODO: Upload the shards as artifacts. If fails, download the shards from the leader of workflow run
+  // TODO: Write the shards to the filesystem
 }
