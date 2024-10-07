@@ -22,6 +22,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
     steps:
       - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
@@ -29,13 +32,18 @@ jobs:
           node-version: 20
       - run: corepack enable pnpm
       - run: pnpm i
-      - run: pnpm test
+      - run: pnpm run test
       - run: pnpm build
-
-      - name: e2e-test
+      - name: Run int128/parallel-test-action
         uses: ./
         with:
-          name: foo
+          test-report-branch: ${{ github.event.pull_request.head.ref }}
+          test-report-artifact-name-prefix: test-report-
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-report-0
+          path: junit.xml
 
   generate:
     runs-on: ubuntu-latest
