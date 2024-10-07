@@ -3,6 +3,7 @@ import { DefaultArtifactClient } from '@actions/artifact'
 import { Octokit } from './github'
 
 type Inputs = {
+  testReportWorkflow: string
   testReportBranch: string
   testReportArtifactNamePrefix: string
   owner: string
@@ -23,12 +24,16 @@ export const downloadTestReports = async (octokit: Octokit, inputs: Inputs) => {
 }
 
 const findTestReportArtifacts = async (octokit: Octokit, inputs: Inputs) => {
-  const { data: listWorkflowRuns } = await octokit.rest.actions.listWorkflowRunsForRepo({
+  const { data: listWorkflowRuns } = await octokit.rest.actions.listWorkflowRuns({
     owner: inputs.owner,
     repo: inputs.repo,
+    workflow_id: inputs.testReportWorkflow,
     branch: inputs.testReportBranch,
     status: 'success',
   })
+  core.info(
+    `Found ${listWorkflowRuns.workflow_runs.length} workflow runs of ${inputs.testReportWorkflow} on branch ${inputs.testReportBranch}`,
+  )
   for (const workflowRun of listWorkflowRuns.workflow_runs) {
     const listArtifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
       owner: inputs.owner,

@@ -7,6 +7,7 @@ type Inputs = {
   testReportArtifactNamePrefix: string
   owner: string
   repo: string
+  workflowFilename: string
   token: string
 }
 
@@ -14,5 +15,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const octokit = getOctokit(inputs.token)
 
   core.info(`Downloading test reports on branch ${inputs.testReportBranch}`)
-  await downloadTestReports(octokit, inputs)
+  await downloadTestReports(octokit, {
+    ...inputs,
+    testReportWorkflow: inputs.workflowFilename,
+  })
 }
