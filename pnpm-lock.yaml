@@ -17,6 +17,9 @@ importers:
       '@actions/github':
         specifier: 6.0.0
         version: 6.0.0
+      '@actions/glob':
+        specifier: ^0.5.0
+        version: 0.5.0
       '@octokit/plugin-retry':
         specifier: 7.1.2
         version: 7.1.2(@octokit/core@5.2.0)
@@ -78,6 +81,9 @@ packages:
 
   '@actions/github@6.0.0':
     resolution: {integrity: sha512-alScpSVnYmjNEXboZjarjukQEzgCRmjMv6Xj47fsdnqGS73bjJNDpiiXmp8jr0UZLdUB6d9jW63IcmddUP+l0g==}
+
+  '@actions/glob@0.5.0':
+    resolution: {integrity: sha512-tST2rjPvJLRZLuT9NMUtyBjvj9Yo0MiJS3ow004slMvm8GFM+Zv9HvMJ7HWzfUyJnGrJvDsYkWBaaG3YKXRtCw==}
 
   '@actions/http-client@2.2.0':
     resolution: {integrity: sha512-q+epW0trjVUUHboliPb4UF9g2msf+w61b32tAkFEwL/IwP0DQWgbCMM0Hbe3e3WXSKz5VcUXbzJQgy8Hkra/Lg==}
@@ -2231,6 +2237,11 @@ snapshots:
       '@octokit/core': 5.2.0
       '@octokit/plugin-paginate-rest': 9.2.1(@octokit/core@5.2.0)
       '@octokit/plugin-rest-endpoint-methods': 10.4.1(@octokit/core@5.2.0)
+
+  '@actions/glob@0.5.0':
+    dependencies:
+      '@actions/core': 1.11.1
+      minimatch: 3.1.2
 
   '@actions/http-client@2.2.0':
     dependencies:

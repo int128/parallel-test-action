@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as path from 'path'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { Octokit } from './github'
 
@@ -15,20 +16,20 @@ type Inputs = {
 export const downloadTestReports = async (octokit: Octokit, inputs: Inputs) => {
   const testReportArtifacts = await findTestReportArtifacts(octokit, inputs)
   if (testReportArtifacts.length === 0) {
-    core.warning('No test reports found') //TODO
     return
   }
+
+  core.info(`Found the test reports:`)
   for (const testReportArtifact of testReportArtifacts) {
     core.info(
       `- ${testReportArtifact.name} (${testReportArtifact.size_in_bytes} bytes, ${testReportArtifact.created_at})`,
     )
   }
-
   const artifactClient = new DefaultArtifactClient()
   for (const testReportArtifact of testReportArtifacts) {
     await core.group(`Downloading the artifact: ${testReportArtifact.name}`, () =>
       artifactClient.downloadArtifact(testReportArtifact.id, {
-        path: inputs.testReportDirectory,
+        path: path.join(inputs.testReportDirectory, testReportArtifact.name),
         findBy: {
           workflowRunId: testReportArtifact.workflowRunId,
           repositoryOwner: inputs.owner,
@@ -48,11 +49,12 @@ const findTestReportArtifacts = async (octokit: Octokit, inputs: Inputs) => {
     branch: inputs.testReportBranch,
     status: 'success',
   })
+  core.info(`Found the last workflow runs:`)
   for (const workflowRun of listWorkflowRuns.workflow_runs) {
-    core.info(`- ${workflowRun.id} (${workflowRun.created_at}, ${workflowRun.status}) ${workflowRun.url}`)
+    core.info(`- ${workflowRun.id} (${workflowRun.created_at}) ${workflowRun.url}`)
   }
   for (const workflowRun of listWorkflowRuns.workflow_runs) {
-    core.info(`Finding the test reports from workflow run ${workflowRun.id}`)
+    core.info(`Finding the test reports from workflow run ${workflowRun.id} (${workflowRun.created_at})`)
     const listArtifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
       owner: inputs.owner,
       repo: inputs.repo,

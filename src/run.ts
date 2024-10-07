@@ -1,6 +1,8 @@
 import * as core from '@actions/core'
+import * as glob from '@actions/glob'
 import * as fs from 'fs/promises'
 import * as os from 'os'
+import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadTestReports } from './artifact'
 
@@ -27,9 +29,8 @@ export const run = async (inputs: Inputs): Promise<void> => {
     token: inputs.token,
   })
 
-  for (const f of await fs.readdir(testReportDirectory, { withFileTypes: true })) {
-    if (f.isFile()) {
-      core.info(`- ${f.name}`)
-    }
+  const xmlGlobber = await glob.create(path.join(testReportDirectory, '**/*.xml'))
+  for await (const xml of xmlGlobber.globGenerator()) {
+    core.info(`Found the test report: ${xml}`)
   }
 }
