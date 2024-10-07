@@ -40,7 +40,7 @@ jobs:
           test-report-branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           test-report-artifact-name-prefix: test-report-
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4
         with:
           name: test-report-0
           path: junit.xml
