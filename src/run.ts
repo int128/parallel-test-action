@@ -16,7 +16,11 @@ export const run = async (inputs: Inputs): Promise<void> => {
 
   core.info(`Downloading test reports on branch ${inputs.testReportBranch}`)
   await downloadTestReports(octokit, {
-    ...inputs,
+    testReportBranch: inputs.testReportBranch,
+    testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
     testReportWorkflow: inputs.workflowFilename,
+    owner: inputs.owner,
+    repo: inputs.repo,
+    token: inputs.token,
   })
 }
