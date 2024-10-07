@@ -37,7 +37,7 @@ jobs:
       - name: Run int128/parallel-test-action
         uses: ./
         with:
-          test-report-branch: ${{ github.event.pull_request.head.ref }}
+          test-report-branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           test-report-artifact-name-prefix: test-report-
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
