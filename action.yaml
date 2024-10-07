@@ -1,4 +1,4 @@
-name: typescript-action
+name: parallel-test-action
 description: Template of TypeScript Action
 
 inputs:
