@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as glob from '@actions/glob'
 import * as path from 'path'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { Octokit } from './github'
@@ -16,10 +17,10 @@ type Inputs = {
 export const downloadTestReports = async (octokit: Octokit, inputs: Inputs) => {
   const testReportArtifacts = await findTestReportArtifacts(octokit, inputs)
   if (testReportArtifacts.length === 0) {
-    return
+    return []
   }
 
-  core.info(`Found the test reports:`)
+  core.info(`Found the artiafcts:`)
   for (const testReportArtifact of testReportArtifacts) {
     core.info(
       `- ${testReportArtifact.name} (${testReportArtifact.size_in_bytes} bytes, ${testReportArtifact.created_at})`,
@@ -39,6 +40,14 @@ export const downloadTestReports = async (octokit: Octokit, inputs: Inputs) => {
       }),
     )
   }
+
+  const testReportGlobber = await glob.create(path.join(inputs.testReportDirectory, '**/*.xml'))
+  const testReportFiles = await testReportGlobber.glob()
+  core.info(`Found the test reports:`)
+  for (const f of testReportFiles) {
+    core.info(`- ${f}`)
+  }
+  return testReportFiles
 }
 
 const findTestReportArtifacts = async (octokit: Octokit, inputs: Inputs) => {
@@ -54,7 +63,7 @@ const findTestReportArtifacts = async (octokit: Octokit, inputs: Inputs) => {
     core.info(`- ${workflowRun.id} (${workflowRun.created_at}) ${workflowRun.url}`)
   }
   for (const workflowRun of listWorkflowRuns.workflow_runs) {
-    core.info(`Finding the test reports from workflow run ${workflowRun.id} (${workflowRun.created_at})`)
+    core.info(`Finding the artifacts from workflow run ${workflowRun.id} (${workflowRun.created_at})`)
     const listArtifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
       owner: inputs.owner,
       repo: inputs.repo,

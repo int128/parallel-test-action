@@ -6,4 +6,14 @@ export default {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  reporters: [
+    'default',
+    [
+      // https://github.com/jest-community/jest-junit
+      'jest-junit',
+      {
+        addFileAttribute: 'true',
+      },
+    ],
+  ],
 }

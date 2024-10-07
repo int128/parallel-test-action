@@ -1,3 +1,3 @@
-test('fixture', () => {
+test('baz', () => {
   expect(true).toBe(true)
 })

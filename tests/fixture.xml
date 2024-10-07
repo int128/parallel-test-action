@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="3" failures="0" errors="0" time="2.265">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2024-10-07T10:11:09" time="2.066" tests="1">
+    <testcase classname=" baz" name=" baz" time="0.003" file="tests/fixture2.test.ts">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2024-10-07T10:11:09" time="2.069" tests="2">
+    <testcase classname=" foo" name=" foo" time="0.002" file="tests/fixture1.test.ts">
+    </testcase>
+    <testcase classname=" bar" name=" bar" time="0" file="tests/fixture1.test.ts">
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -32,7 +32,7 @@ jobs:
           node-version: 20
       - run: corepack enable pnpm
       - run: pnpm i
-      - run: pnpm run test --reporters=default --reporters=jest-junit
+      - run: pnpm run test
       - run: pnpm build
       - name: Run int128/parallel-test-action
         uses: ./
