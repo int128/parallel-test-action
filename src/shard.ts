@@ -87,7 +87,7 @@ export const writeShardsWithLeaderElection = async (
   await core.group(`Downloading artifact ${shardsArtifactName} of the leader`, () =>
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
-  const shardGlobber = await glob.create(path.join(shardsDirectory, '**/*'))
+  const shardGlobber = await glob.create(path.join(shardsDirectory, '*'))
   return await shardGlobber.glob()
 }
 
