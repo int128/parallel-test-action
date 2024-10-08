@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import { DefaultArtifactClient, InvalidResponseError } from '@actions/artifact'
+import { DefaultArtifactClient, NetworkError } from '@actions/artifact'
 
 type TestFile = {
   filename: string
@@ -76,7 +76,7 @@ export const leaderElect = async (
     )
     return
   } catch (e) {
-    if (e instanceof InvalidResponseError) {
+    if (e instanceof NetworkError && e.code === '409') {
       core.warning(`Another job is leader. Trying to download it.\n${String(e)}`)
     } else {
       throw e
