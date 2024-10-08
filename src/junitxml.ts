@@ -115,6 +115,19 @@ export const findTestCases = (junitXml: JunitXml): TestCase[] => {
   return testCases
 }
 
+export const findTestCasesFromTestReportFiles = async (testReportFiles: string[]) => {
+  const allTestCases = []
+  core.startGroup(`Parsing ${testReportFiles.length} test report files`)
+  for (const testReportFile of testReportFiles) {
+    core.info(`Parsing the test report: ${testReportFile}`)
+    const xml = await fs.readFile(testReportFile)
+    const testCases = findTestCases(parseJunitXml(xml))
+    allTestCases.push(...testCases)
+  }
+  core.endGroup()
+  return allTestCases
+}
+
 type TestFile = {
   filename: string
   totalTime: number
@@ -134,18 +147,4 @@ export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
     testFiles.set(testCase['@_file'], currentTestFile)
   }
   return [...testFiles.values()]
-}
-
-export const aggregateTestReports = async (testReportFiles: string[]): Promise<TestFile[]> => {
-  const allTestCases = []
-  for (const testReportFile of testReportFiles) {
-    core.info(`Parsing the test report: ${testReportFile}`)
-    const xml = await fs.readFile(testReportFile)
-    const junitXml = parseJunitXml(xml)
-    const testCases = findTestCases(junitXml)
-    allTestCases.push(...testCases)
-  }
-  core.info(`Found ${allTestCases.length} test cases in the test reports`)
-
-  return groupTestCasesByTestFile(allTestCases)
 }

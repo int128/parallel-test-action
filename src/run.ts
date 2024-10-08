@@ -5,7 +5,7 @@ import * as os from 'os'
 import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
-import { aggregateTestReports } from './junitxml'
+import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
 import { generateShards, writeShardsWithLeaderElection } from './shard'
 
 type Inputs = {
@@ -43,34 +43,48 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     repo: inputs.repo,
     token: inputs.token,
   })
-  core.startGroup(`Found ${testReportFiles.length} test reports:`)
-  for (const f of testReportFiles) {
-    core.info(`- ${f}`)
-  }
-  core.endGroup()
 
-  const testFiles = await aggregateTestReports(testReportFiles)
-  core.startGroup(`Found ${testFiles.length} test files in the test reports`)
-  for (const f of testFiles.values()) {
-    core.info(`- ${f.filename}: ${f.totalTestCases} test cases, total ${f.totalTime.toFixed(1)}s`)
-  }
-  core.endGroup()
-
+  const allTestCases = await findTestCasesFromTestReportFiles(testReportFiles)
+  core.info(`Found ${allTestCases.length} test cases in the test reports`)
+  const testFiles = groupTestCasesByTestFile(allTestCases)
   const shards = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
-  core.info(`Generated ${shards.length} shards:`)
-  for (const [i, shard] of shards.entries()) {
-    core.info(
-      `- Shard #${i + 1}: ${shard.testFiles.length} test files, ${shard.totalTestCases} test cases, estimated ${shard.totalTime.toFixed(1)}s`,
-    )
-  }
+  core.info(`Generated ${shards.length} shards`)
 
   const shardsDirectory = path.join(tempDirectory, 'shards')
-  const shardFilenames = await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
-  core.info(`Available ${shardFilenames.length} shard files:`)
-  for (const shardFilename of shardFilenames) {
-    core.info(`- ${shardFilename}`)
+  const leaderElection = await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
+
+  if (leaderElection.leader) {
+    core.summary.addHeading('Generated shards')
+    core.summary.addTable([
+      [
+        { data: 'Index', header: true },
+        { data: 'Test files', header: true },
+        { data: 'Test cases', header: true },
+        { data: 'Total time (s)', header: true },
+      ],
+      ...shards.map((shard, i) => [
+        `#${i + 1}`,
+        `${shard.testFiles.length}`,
+        `${shard.totalTestCases}`,
+        shard.totalTime.toFixed(1),
+      ]),
+    ])
+
+    core.summary.addHeading('Input of the test reports')
+    core.summary.addTable([
+      [
+        { data: 'Test file', header: true },
+        { data: 'Test cases', header: true },
+        { data: 'Total time (s)', header: true },
+      ],
+      ...testFiles.map((f) => [f.filename, `${f.totalTestCases}`, f.totalTime.toFixed(1)]),
+    ])
   }
 
+  core.info(`Available ${leaderElection.shardFilenames.length} shard files:`)
+  for (const shardFilename of leaderElection.shardFilenames) {
+    core.info(`- ${shardFilename}`)
+  }
   return { shardsDirectory }
 }
 

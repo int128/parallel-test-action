@@ -16,6 +16,7 @@ const main = async (): Promise<void> => {
     workflowFilename: getWorkflowFilename(),
     token: core.getInput('token', { required: true }),
   })
+  await core.summary.write()
   core.setOutput('shards-directory', outputs.shardsDirectory)
 }
 

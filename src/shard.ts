@@ -71,11 +71,16 @@ const averageOf = (a: number[]) => {
 
 const sortByTime = <E extends { totalTime: number }>(shards: E[]) => shards.sort((a, b) => a.totalTime - b.totalTime)
 
+type LeaderElection = {
+  shardFilenames: string[]
+  leader: boolean
+}
+
 export const writeShardsWithLeaderElection = async (
   shards: Shard[],
   shardsDirectory: string,
   shardsArtifactName: string,
-) => {
+): Promise<LeaderElection> => {
   const artifactClient = new DefaultArtifactClient()
 
   core.info(`Acquiring the leadership of shards`)
@@ -87,7 +92,10 @@ export const writeShardsWithLeaderElection = async (
   )
   if (!uploadArtifactError) {
     core.info(`This job becomes the leader`)
-    return shardFilenames
+    return {
+      shardFilenames,
+      leader: true,
+    }
   }
 
   core.info(`Another job has the leadership: ${uploadArtifactError}`)
@@ -99,7 +107,10 @@ export const writeShardsWithLeaderElection = async (
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
   const shardGlobber = await glob.create(path.join(shardsDirectory, '*'))
-  return await shardGlobber.glob()
+  return {
+    shardFilenames: await shardGlobber.glob(),
+    leader: false,
+  }
 }
 
 const catchHttp409ConflictError = async (f: () => Promise<void>): Promise<undefined | Error> => {
