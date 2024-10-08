@@ -6,7 +6,7 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { generateShards, writeShardsWithLeaderElection } from './shard'
+import { generateShards, writeShardSummary, writeShardsWithLeaderElection } from './shard'
 
 type Inputs = {
   workingDirectory: string
@@ -47,38 +47,17 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const allTestCases = await findTestCasesFromTestReportFiles(testReportFiles)
   core.info(`Found ${allTestCases.length} test cases in the test reports`)
   const testFiles = groupTestCasesByTestFile(allTestCases)
-  const shards = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
-  core.info(`Generated ${shards.length} shards`)
+  const shardSet = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
+  core.info(`Generated ${shardSet.shards.length} shards`)
 
   const shardsDirectory = path.join(tempDirectory, 'shards')
-  const leaderElection = await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
-
+  const leaderElection = await writeShardsWithLeaderElection(
+    shardSet.shards,
+    shardsDirectory,
+    inputs.shardsArtifactName,
+  )
   if (leaderElection.leader) {
-    core.summary.addHeading('Generated shards')
-    core.summary.addTable([
-      [
-        { data: 'Index', header: true },
-        { data: 'Test files', header: true },
-        { data: 'Test cases', header: true },
-        { data: 'Total time (s)', header: true },
-      ],
-      ...shards.map((shard, i) => [
-        `#${i + 1}`,
-        `${shard.testFiles.length}`,
-        `${shard.totalTestCases}`,
-        shard.totalTime.toFixed(1),
-      ]),
-    ])
-
-    core.summary.addHeading('Input of the test reports')
-    core.summary.addTable([
-      [
-        { data: 'Test file', header: true },
-        { data: 'Test cases', header: true },
-        { data: 'Total time (s)', header: true },
-      ],
-      ...testFiles.map((f) => [f.filename, `${f.totalTestCases}`, f.totalTime.toFixed(1)]),
-    ])
+    writeShardSummary(shardSet)
   }
 
   core.info(`Available ${leaderElection.shardFilenames.length} shard files:`)
