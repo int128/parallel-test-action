@@ -9,15 +9,15 @@ type TestFile = {
 }
 
 export class Shard {
-  private _estimatedTime: number = 0
+  private _totalTime: number = 0
   readonly testFiles: TestFile[] = []
 
-  get estimatedTime() {
-    return this._estimatedTime
+  get totalTime() {
+    return this._totalTime
   }
 
   add(testFile: TestFile): void {
-    this._estimatedTime += testFile.totalTime
+    this._totalTime += testFile.totalTime
     this.testFiles.push(testFile)
   }
 }
@@ -29,30 +29,39 @@ const createShards = (count: number): Shard[] =>
 
 export const generateShards = (
   workingTestFilenames: string[],
-  testFileEstimations: TestFile[],
+  reportedTestFiles: TestFile[],
   shardCount: number,
 ): Shard[] => {
-  const averageTestFileTime = average(testFileEstimations.map((f) => f.totalTime))
-  const workingTestFiles = workingTestFilenames.map((workingTestFilename) => {
-    const estimation = testFileEstimations.find((f) => f.filename === workingTestFilename)
+  const averageTime = averageOf(reportedTestFiles.map((f) => f.totalTime))
+  const reportedTestFileByName = new Map(reportedTestFiles.map((f) => [f.filename, f]))
+
+  const workingTestFiles = workingTestFilenames.map((workingTestFilename): TestFile => {
+    const reportedTestFile = reportedTestFileByName.get(workingTestFilename)
+    if (reportedTestFile === undefined) {
+      // If the test file does not exist in the test reports, we assume the average time.
+      return {
+        filename: workingTestFilename,
+        totalTime: averageTime,
+      }
+    }
     return {
       filename: workingTestFilename,
-      totalTime: estimation?.totalTime ?? averageTestFileTime,
+      totalTime: reportedTestFile.totalTime,
     }
   })
 
   const shards = createShards(shardCount)
   for (const workingTestFile of workingTestFiles) {
-    sortShardsByEstimatedTime(shards)
+    sortShardsByTime(shards)
     const leastShard = shards[0]
     leastShard.add(workingTestFile)
   }
   return shards
 }
 
-const average = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
+const averageOf = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
 
-const sortShardsByEstimatedTime = (shards: Shard[]) => shards.sort((a, b) => a.estimatedTime - b.estimatedTime)
+const sortShardsByTime = (shards: Shard[]) => shards.sort((a, b) => a.totalTime - b.totalTime)
 
 export const leaderElect = async (
   shards: Shard[],

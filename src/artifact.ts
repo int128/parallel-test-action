@@ -81,6 +81,6 @@ const findTestReportArtifacts = async (octokit: Octokit, inputs: Inputs, lastWor
   const testReportArtifacts = listArtifacts.filter((workflowRunArtifact) =>
     workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix),
   )
-  core.info(`Filtered ${testReportArtifacts.length} artifacts with the prefix ${inputs.testReportArtifactNamePrefix}`)
+  core.info(`Filtered ${testReportArtifacts.length} artifacts of the test reports`)
   return testReportArtifacts
 }

@@ -58,7 +58,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const shards = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shards.length} shards:`)
   for (const [i, shard] of shards.entries()) {
-    core.info(`- #${i + 1}: ${shard.testFiles.length} files, ${shard.estimatedTime}s`)
+    core.info(`- Shard #${i + 1}: ${shard.testFiles.length} test files, ${shard.totalTime}s`)
   }
 
   const shardsDirectory = path.join(tempDirectory, 'shards')
