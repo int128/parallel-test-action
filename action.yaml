@@ -8,6 +8,13 @@ inputs:
   test-report-artifact-name-prefix:
     description: Prefix of the test report artifact name
     required: true
+  shard-count:
+    description: Number of shards
+    required: true
+  shards-artifact-name:
+    description: Name of the shards artifact
+    required: true
+    default: parallel-test-shards
   token:
     description: GitHub token
     required: true

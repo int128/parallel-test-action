@@ -1,13 +1,17 @@
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
 import * as os from 'os'
+import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadTestReports } from './artifact'
 import { parseJunitXml } from './junitxml'
+import { generateShards, writeShardsWithLeaderElection } from './shard'
 
 type Inputs = {
   testReportBranch: string
   testReportArtifactNamePrefix: string
+  shardCount: number
+  shardsArtifactName: string
   owner: string
   repo: string
   workflowFilename: string
@@ -16,8 +20,9 @@ type Inputs = {
 
 export const run = async (inputs: Inputs): Promise<void> => {
   const octokit = getOctokit(inputs.token)
+  const tempDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
 
-  const testReportDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
+  const testReportDirectory = path.join(tempDirectory, 'test-reports')
   const testReportFiles = await downloadTestReports(octokit, {
     testReportBranch: inputs.testReportBranch,
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
@@ -34,8 +39,9 @@ export const run = async (inputs: Inputs): Promise<void> => {
     core.info(`Parsed ${testReportFile}: ${JSON.stringify(junitXml, null, 2)}`)
   }
 
-  // TODO: Calculate the time per test file
-  // TODO: Split the test files into shards
-  // TODO: Upload the shards as artifacts. If fails, download the shards from the leader of workflow run
-  // TODO: Write the shards to the filesystem
+  // TODO
+  const shards = generateShards([], inputs.shardCount)
+
+  const shardsDirectory = path.join(tempDirectory, 'shards')
+  await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
 }

@@ -7,6 +7,8 @@ const main = async (): Promise<void> => {
   await run({
     testReportBranch: core.getInput('test-report-branch', { required: true }),
     testReportArtifactNamePrefix: core.getInput('test-report-artifact-name-prefix', { required: true }),
+    shardCount: parseInt(core.getInput('shard-count', { required: true })),
+    shardsArtifactName: core.getInput('shards-artifact-name', { required: true }),
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     workflowFilename: getWorkflowFilename(),
