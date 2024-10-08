@@ -62,7 +62,12 @@ const estimateWorkingTestFiles = (workingTestFilenames: string[], reportedTestFi
   return workingTestFiles
 }
 
-const averageOf = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
+const averageOf = (a: number[]) => {
+  if (a.length === 0) {
+    return 0
+  }
+  return a.reduce((x, y) => x + y, 0) / a.length
+}
 
 const sortByTime = <E extends { totalTime: number }>(shards: E[]) => shards.sort((a, b) => a.totalTime - b.totalTime)
 
