@@ -15,12 +15,18 @@ type WorkingTestFile = {
   existsInTestReports: boolean
   totalTime: number
   totalTestCases: number
+  assignedShardId?: number
 }
 
 class Shard {
+  readonly id: number
   totalTime: number = 0
   totalTestCases: number = 0
   readonly testFiles: WorkingTestFile[] = []
+
+  constructor(id: number) {
+    this.id = id
+  }
 
   add(testFile: WorkingTestFile): void {
     this.totalTime += testFile.totalTime
@@ -32,7 +38,7 @@ class Shard {
 const createShards = (count: number): Shard[] =>
   Array(count)
     .fill(null)
-    .map(() => new Shard())
+    .map((_, index) => new Shard(index + 1))
 
 type ShardSet = {
   shards: Shard[]
@@ -44,13 +50,13 @@ export const writeShardSummary = (shardSet: ShardSet) => {
   core.summary.addHeading('Shards', 2)
   core.summary.addTable([
     [
-      { data: 'Index', header: true },
+      { data: 'ID', header: true },
       { data: 'Test files', header: true },
       { data: 'Estimated test cases', header: true },
       { data: 'Estimated time (s)', header: true },
     ],
-    ...shardSet.shards.map((shard, i) => [
-      `#${i + 1}`,
+    ...shardSet.shards.map((shard) => [
+      `#${shard.id}`,
       `${shard.testFiles.length}`,
       `${shard.totalTestCases}`,
       shard.totalTime.toFixed(1),
@@ -63,12 +69,18 @@ export const writeShardSummary = (shardSet: ShardSet) => {
       { data: 'Test file', header: true },
       { data: 'Test cases', header: true },
       { data: 'Total time (s)', header: true },
+      { data: 'Shard', header: true },
     ],
-    ...shardSet.workingTestFiles.map((f) =>
-      f.existsInTestReports
-        ? [f.filename, `${f.totalTestCases}`, f.totalTime.toFixed(1)]
-        : [f.filename, '-', `${f.totalTime.toFixed(1)} (no report)`],
-    ),
+    ...shardSet.workingTestFiles.map((f) => {
+      let shardId = '-'
+      if (f.assignedShardId !== undefined) {
+        shardId = `#${f.assignedShardId}`
+      }
+      if (f.existsInTestReports) {
+        return [f.filename, `${f.totalTestCases}`, f.totalTime.toFixed(1), shardId]
+      }
+      return [f.filename, '-', `no report (${f.totalTime.toFixed(1)})`, shardId]
+    }),
   ])
 }
 
@@ -85,6 +97,7 @@ export const generateShards = (
     sortByTime(shards)
     const leastShard = shards[0]
     leastShard.add(workingTestFile)
+    workingTestFile.assignedShardId = leastShard.id
   }
   return { shards, workingTestFiles }
 }
@@ -197,8 +210,8 @@ const retryArtifactNotFoundError = async <T>(f: () => Promise<T>): Promise<T> =>
 const writeShards = async (shards: Shard[], directory: string): Promise<string[]> => {
   await fs.mkdir(directory, { recursive: true })
   const shardFilenames = []
-  for (const [index, shard] of shards.entries()) {
-    const shardFilename = path.join(directory, `${index + 1}`)
+  for (const shard of shards) {
+    const shardFilename = path.join(directory, `${shard.id}`)
     const content = shard.testFiles.map((f) => f.filename).join('\n')
     await fs.writeFile(shardFilename, content)
     shardFilenames.push(shardFilename)
