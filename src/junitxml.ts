@@ -1,6 +1,7 @@
 import assert from 'assert'
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
+import * as path from 'path'
 import { XMLParser } from 'fast-xml-parser'
 
 export type JunitXml = {
@@ -137,14 +138,15 @@ type TestFile = {
 export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
   const testFiles = new Map<string, TestFile>()
   for (const testCase of testCases) {
-    const currentTestFile = testFiles.get(testCase['@_file']) ?? {
-      filename: testCase['@_file'],
+    const testFilename = path.normalize(testCase['@_file'])
+    const currentTestFile = testFiles.get(testFilename) ?? {
+      filename: testFilename,
       totalTime: 0,
       totalTestCases: 0,
     }
     currentTestFile.totalTime += testCase['@_time']
     currentTestFile.totalTestCases++
-    testFiles.set(testCase['@_file'], currentTestFile)
+    testFiles.set(testFilename, currentTestFile)
   }
   return [...testFiles.values()]
 }
