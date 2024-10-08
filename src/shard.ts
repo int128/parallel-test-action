@@ -76,8 +76,8 @@ export const leaderElect = async (
     )
     return
   } catch (e) {
-    if (e instanceof NetworkError && e.code === '409') {
-      core.warning(`Another job is leader. Trying to download it.\n${String(e)}`)
+    if (e instanceof NetworkError) {
+      core.warning(`Another job is leader. Trying to download it.\n${e.code}\n${String(e)}`)
     } else {
       throw e
     }
