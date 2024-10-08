@@ -4,7 +4,7 @@ import * as os from 'os'
 import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadTestReports } from './artifact'
-import { parseJunitXml } from './junitxml'
+import { findTestCases, groupTestCasesByTestFile, parseJunitXml } from './junitxml'
 import { generateShards, writeShardsWithLeaderElection } from './shard'
 
 type Inputs = {
@@ -18,7 +18,11 @@ type Inputs = {
   token: string
 }
 
-export const run = async (inputs: Inputs): Promise<void> => {
+type Outputs = {
+  shardsDirectory: string
+}
+
+export const run = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = getOctokit(inputs.token)
   const tempDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
 
@@ -33,15 +37,20 @@ export const run = async (inputs: Inputs): Promise<void> => {
     token: inputs.token,
   })
 
+  const allTestCases = []
   for (const testReportFile of testReportFiles) {
     const xml = await fs.readFile(testReportFile)
     const junitXml = parseJunitXml(xml)
-    core.info(`Parsed ${testReportFile}: ${JSON.stringify(junitXml, null, 2)}`)
+    const testCases = findTestCases(junitXml)
+    allTestCases.push(...testCases)
   }
+  core.info(`Found ${allTestCases.length} test cases`)
 
-  // TODO
-  const shards = generateShards([], inputs.shardCount)
+  const testFiles = groupTestCasesByTestFile(allTestCases)
+  const shards = generateShards(testFiles, inputs.shardCount)
 
   const shardsDirectory = path.join(tempDirectory, 'shards')
   await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
+
+  return { shardsDirectory }
 }

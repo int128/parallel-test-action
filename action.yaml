@@ -19,6 +19,10 @@ inputs:
     description: GitHub token
     required: true
 
+outputs:
+  shards-directory:
+    description: Directory of the shards
+
 runs:
   using: 'node20'
   main: 'dist/index.js'

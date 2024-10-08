@@ -4,7 +4,7 @@ import { run } from './run.js'
 import { getWorkflowFilename } from './github.js'
 
 const main = async (): Promise<void> => {
-  await run({
+  const outputs = await run({
     testReportBranch: core.getInput('test-report-branch', { required: true }),
     testReportArtifactNamePrefix: core.getInput('test-report-artifact-name-prefix', { required: true }),
     shardCount: parseInt(core.getInput('shard-count', { required: true })),
@@ -14,6 +14,7 @@ const main = async (): Promise<void> => {
     workflowFilename: getWorkflowFilename(),
     token: core.getInput('token', { required: true }),
   })
+  core.setOutput('shards-directory', outputs.shardsDirectory)
 }
 
 main().catch((e: Error) => {

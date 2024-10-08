@@ -32,14 +32,17 @@ jobs:
           node-version: 20
       - run: corepack enable pnpm
       - run: pnpm i
-      - run: pnpm run test
       - run: pnpm build
       - name: Run int128/parallel-test-action
+        id: parallel-test
         uses: ./
         with:
           test-report-branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           test-report-artifact-name-prefix: test-report-
+          shard-count: 2
           token: ${{ secrets.GITHUB_TOKEN }}
+      - run: find '${{ steps.parallel-test.outputs.shards-directory }}'
+      - run: pnpm run test
       - uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
         with:
           name: test-report-0
