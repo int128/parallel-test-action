@@ -51,7 +51,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const testFiles = await aggregateTestReports(testReportFiles)
   core.startGroup(`Found ${testFiles.length} test files in the test reports`)
   for (const f of testFiles.values()) {
-    core.info(`- ${f.filename}: ${f.totalTestCases} tests, ${f.totalTime}s`)
+    core.info(`- ${f.filename}: ${f.totalTestCases} test cases, total ${f.totalTime}s`)
   }
   core.endGroup()
 
