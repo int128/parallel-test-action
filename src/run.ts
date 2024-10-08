@@ -1,24 +1,40 @@
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
+import * as glob from '@actions/glob'
 import * as os from 'os'
+import * as path from 'path'
 import { getOctokit } from './github'
-import { downloadTestReports } from './artifact'
-import { parseJunitXml } from './junitxml'
+import { downloadLastTestReports } from './artifact'
+import { aggregateTestReports } from './junitxml'
+import { generateShards, writeShardsWithLeaderElection } from './shard'
 
 type Inputs = {
+  workingDirectory: string
+  testFiles: string
   testReportBranch: string
   testReportArtifactNamePrefix: string
+  shardCount: number
+  shardsArtifactName: string
   owner: string
   repo: string
   workflowFilename: string
   token: string
 }
 
-export const run = async (inputs: Inputs): Promise<void> => {
-  const octokit = getOctokit(inputs.token)
+type Outputs = {
+  shardsDirectory: string
+}
 
-  const testReportDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
-  const testReportFiles = await downloadTestReports(octokit, {
+export const run = async (inputs: Inputs): Promise<Outputs> => {
+  process.chdir(inputs.workingDirectory)
+  const workingTestFilenames = await globRelative(inputs.testFiles)
+  core.info(`Found ${workingTestFilenames.length} test files in the working directory`)
+
+  const octokit = getOctokit(inputs.token)
+  const tempDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
+
+  const testReportDirectory = path.join(tempDirectory, 'test-reports')
+  const testReportFiles = await downloadLastTestReports(octokit, {
     testReportBranch: inputs.testReportBranch,
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
     testReportWorkflow: inputs.workflowFilename,
@@ -27,15 +43,37 @@ export const run = async (inputs: Inputs): Promise<void> => {
     repo: inputs.repo,
     token: inputs.token,
   })
-
-  for (const testReportFile of testReportFiles) {
-    const xml = await fs.readFile(testReportFile)
-    const junitXml = parseJunitXml(xml)
-    core.info(`Parsed ${testReportFile}: ${JSON.stringify(junitXml, null, 2)}`)
+  core.info(`Found ${testReportFiles.length} test reports:`)
+  for (const f of testReportFiles) {
+    core.info(`- ${f}`)
   }
 
-  // TODO: Calculate the time per test file
-  // TODO: Split the test files into shards
-  // TODO: Upload the shards as artifacts. If fails, download the shards from the leader of workflow run
-  // TODO: Write the shards to the filesystem
+  const testFiles = await aggregateTestReports(testReportFiles)
+  core.startGroup(`Found ${testFiles.length} test files in the test reports`)
+  for (const f of testFiles.values()) {
+    core.info(`- ${f.filename}: ${f.totalTestCases} test cases, total ${f.totalTime}s`)
+  }
+  core.endGroup()
+
+  const shards = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
+  core.info(`Generated ${shards.length} shards:`)
+  for (const [i, shard] of shards.entries()) {
+    core.info(`- Shard #${i + 1}: ${shard.testFiles.length} test files, estimated ${shard.totalTime}s`)
+  }
+
+  const shardsDirectory = path.join(tempDirectory, 'shards')
+  const shardFilenames = await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
+  core.info(`Available ${shardFilenames.length} shard files:`)
+  for (const shardFilename of shardFilenames) {
+    core.info(`- ${shardFilename}`)
+  }
+
+  return { shardsDirectory }
+}
+
+const globRelative = async (pattern: string) => {
+  const globber = await glob.create(pattern)
+  const files = await globber.glob()
+  const cwd = process.cwd()
+  return files.map((f) => path.relative(cwd, f))
 }

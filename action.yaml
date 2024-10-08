@@ -2,15 +2,33 @@ name: parallel-test-action
 description: Template of TypeScript Action
 
 inputs:
+  working-directory:
+    description: Working directory
+    required: false
+    default: .
+  test-files:
+    description: Glob pattern of test files
+    required: true
   test-report-branch:
     description: Branch to find the test report artifacts
     required: true
   test-report-artifact-name-prefix:
     description: Prefix of the test report artifact name
     required: true
+  shard-count:
+    description: Number of shards
+    required: true
+  shards-artifact-name:
+    description: Name of the shards artifact
+    required: true
+    default: parallel-test-shards
   token:
     description: GitHub token
     required: true
+
+outputs:
+  shards-directory:
+    description: Directory of the shards
 
 runs:
   using: 'node20'

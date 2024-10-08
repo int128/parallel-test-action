@@ -1,4 +1,6 @@
 import assert from 'assert'
+import * as core from '@actions/core'
+import * as fs from 'fs/promises'
 import { XMLParser } from 'fast-xml-parser'
 
 export type JunitXml = {
@@ -77,11 +79,14 @@ export const parseJunitXml = (xml: string | Buffer): JunitXml => {
     removeNSPrefix: true,
     isArray: (_: string, jPath: string): boolean => {
       const elementName = jPath.split('.').pop()
-      return ['testsuite', 'testcase'].includes(elementName ?? '')
+      return elementName === 'testsuite' || elementName === 'testcase'
     },
     attributeValueProcessor: (attrName: string, attrValue: string, jPath: string) => {
       const elementName = jPath.split('.').pop()
-      if (attrName === 'time' && ['testsuites', 'testsuite', 'testcase'].includes(elementName ?? '')) {
+      if (
+        (elementName === 'testsuites' || elementName === 'testsuite' || elementName === 'testcase') &&
+        attrName === 'time'
+      ) {
         return Number(attrValue)
       }
       return attrValue
@@ -90,4 +95,57 @@ export const parseJunitXml = (xml: string | Buffer): JunitXml => {
   const parsed: unknown = parser.parse(xml)
   assertJunitXml(parsed)
   return parsed
+}
+
+export const findTestCases = (junitXml: JunitXml): TestCase[] => {
+  const testCases: TestCase[] = []
+  const visit = (testSuite: TestSuite): void => {
+    for (const testCase of testSuite.testcase ?? []) {
+      testCases.push(testCase)
+    }
+    for (const nestedTestSuite of testSuite.testsuite ?? []) {
+      visit(nestedTestSuite)
+    }
+  }
+
+  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
+  for (const testSuite of root) {
+    visit(testSuite)
+  }
+  return testCases
+}
+
+type TestFile = {
+  filename: string
+  totalTime: number
+  totalTestCases: number
+}
+
+export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
+  const testFiles = new Map<string, TestFile>()
+  for (const testCase of testCases) {
+    const currentTestFile = testFiles.get(testCase['@_file']) ?? {
+      filename: testCase['@_file'],
+      totalTime: 0,
+      totalTestCases: 0,
+    }
+    currentTestFile.totalTime += testCase['@_time']
+    currentTestFile.totalTestCases++
+    testFiles.set(testCase['@_file'], currentTestFile)
+  }
+  return [...testFiles.values()]
+}
+
+export const aggregateTestReports = async (testReportFiles: string[]): Promise<TestFile[]> => {
+  const allTestCases = []
+  for (const testReportFile of testReportFiles) {
+    core.info(`Parsing the test report: ${testReportFile}`)
+    const xml = await fs.readFile(testReportFile)
+    const junitXml = parseJunitXml(xml)
+    const testCases = findTestCases(junitXml)
+    allTestCases.push(...testCases)
+  }
+  core.info(`Found ${allTestCases.length} test cases in the test reports`)
+
+  return groupTestCasesByTestFile(allTestCases)
 }
