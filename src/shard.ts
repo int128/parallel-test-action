@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import { DefaultArtifactClient } from '@actions/artifact'
+import { DefaultArtifactClient, InvalidResponseError } from '@actions/artifact'
 
 type TestFile = {
   file: string
@@ -37,15 +37,19 @@ export const writeShardsWithLeaderElection = async (
   directory: string,
   artifactName: string,
 ): Promise<void> => {
+  const shardFilenames = await writeShards(shards, directory)
   const artifactClient = new DefaultArtifactClient()
-  await writeShards(shards, directory)
   try {
     await core.group(`Uploading artifact ${artifactName}`, () =>
-      artifactClient.uploadArtifact(artifactName, [directory], directory),
+      artifactClient.uploadArtifact(artifactName, shardFilenames, directory),
     )
     return
   } catch (e) {
-    core.warning(`Another job is leader. Trying to download it.\n${String(e)}`)
+    if (e instanceof InvalidResponseError) {
+      core.warning(`Another job is leader. Trying to download it.\n${String(e)}`)
+    } else {
+      throw e
+    }
   }
 
   await fs.rm(directory, { recursive: true })
@@ -55,10 +59,16 @@ export const writeShardsWithLeaderElection = async (
   )
 }
 
-const writeShards = async (shards: Shard[], directory: string): Promise<void> => {
+const writeShards = async (shards: Shard[], directory: string): Promise<string[]> => {
   await fs.mkdir(directory, { recursive: true })
+
+  core.info(`Writing shards:`)
+  const shardFilenames = []
   for (const [index, shard] of shards.entries()) {
     const shardFilename = path.join(directory, `${index + 1}`)
     await fs.writeFile(shardFilename, shard.testFiles.join('\n'))
+    shardFilenames.push(shardFilename)
+    core.info(`- ${shardFilename}`)
   }
+  return shardFilenames
 }
