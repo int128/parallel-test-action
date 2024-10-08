@@ -56,6 +56,7 @@ export const writeShardsWithLeaderElection = async (
 }
 
 const writeShards = async (shards: Shard[], directory: string): Promise<void> => {
+  await fs.mkdir(directory, { recursive: true })
   for (const [index, shard] of shards.entries()) {
     const shardFilename = path.join(directory, `${index + 1}`)
     await fs.writeFile(shardFilename, shard.testFiles.join('\n'))
