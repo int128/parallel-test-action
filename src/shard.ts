@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import * as fs from 'fs/promises'
 import * as glob from '@actions/glob'
 import * as path from 'path'
-import { DefaultArtifactClient } from '@actions/artifact'
+import { ArtifactNotFoundError, DefaultArtifactClient } from '@actions/artifact'
 
 type TestFile = {
   filename: string
@@ -100,7 +100,8 @@ export const writeShardsWithLeaderElection = async (
 
   core.info(`Another job has the leadership: ${uploadArtifactError}`)
   core.info(`Finding the shards of the leader`)
-  const existingArtifact = await artifactClient.getArtifact(shardsArtifactName)
+  // For eventual consistency, GetArtifact may return ArtifactNotFoundError just after UploadArtifact.
+  const existingArtifact = await retryArtifactNotFoundError(() => artifactClient.getArtifact(shardsArtifactName))
   await fs.rm(shardsDirectory, { recursive: true })
   await core.group(`Downloading the artifact: ${shardsArtifactName}`, () =>
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
@@ -120,6 +121,26 @@ const catchHttp409ConflictError = async (f: () => Promise<void>): Promise<undefi
     if (e instanceof Error && e.message.includes('409')) {
       return e
     } else {
+      throw e
+    }
+  }
+}
+
+const retryArtifactNotFoundError = async <T>(f: () => Promise<T>): Promise<T> => {
+  const maxAttempt = 10
+  const intervalSec = 3
+  for (let i = 0; ; i++) {
+    try {
+      return await f()
+    } catch (e) {
+      if (e instanceof ArtifactNotFoundError) {
+        if (i >= maxAttempt) {
+          throw e
+        }
+        core.info(`Retrying after ${intervalSec}s: ${String(e)}`)
+        await new Promise((resolve) => setTimeout(resolve, intervalSec * 1000))
+        continue
+      }
       throw e
     }
   }
