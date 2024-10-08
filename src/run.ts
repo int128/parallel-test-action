@@ -6,7 +6,7 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { aggregateTestReports } from './junitxml'
-import { generateShards, leaderElect } from './shard'
+import { generateShards, writeShardsWithLeaderElection } from './shard'
 
 type Inputs = {
   workingDirectory: string
@@ -58,11 +58,15 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const shards = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shards.length} shards:`)
   for (const [i, shard] of shards.entries()) {
-    core.info(`- Shard #${i + 1}: ${shard.testFiles.length} test files, ${shard.totalTime}s`)
+    core.info(`- Shard #${i + 1}: ${shard.testFiles.length} test files, estimated ${shard.totalTime}s`)
   }
 
   const shardsDirectory = path.join(tempDirectory, 'shards')
-  await leaderElect(shards, shardsDirectory, inputs.shardsArtifactName)
+  const shardFilenames = await writeShardsWithLeaderElection(shards, shardsDirectory, inputs.shardsArtifactName)
+  core.info(`Available ${shardFilenames.length} shard files:`)
+  for (const shardFilename of shardFilenames) {
+    core.info(`- ${shardFilename}`)
+  }
 
   return { shardsDirectory }
 }
