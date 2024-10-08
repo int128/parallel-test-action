@@ -38,7 +38,7 @@ export const downloadLastTestReports = async (octokit: Octokit, inputs: Inputs) 
       }),
     )
   }
-  const testReportGlobber = await glob.create(path.join(inputs.testReportDirectory, '**/*.xml'))
+  const testReportGlobber = await glob.create(path.join(inputs.testReportDirectory, '*.xml'))
   return await testReportGlobber.glob()
 }
 
