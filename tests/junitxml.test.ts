@@ -48,9 +48,9 @@ describe('groupTestCasesByTestFile', () => {
       { '@_name': 'test5', '@_time': 5, '@_file': 'file3' },
     ]
     expect(groupTestCasesByTestFile(testCases)).toEqual([
-      { file: 'file1', time: 4 },
-      { file: 'file2', time: 6 },
-      { file: 'file3', time: 5 },
+      { filename: 'file1', totalTime: 4, totalTestCases: 2 },
+      { filename: 'file2', totalTime: 6, totalTestCases: 2 },
+      { filename: 'file3', totalTime: 5, totalTestCases: 1 },
     ])
   })
 })

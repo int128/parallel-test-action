@@ -1,4 +1,6 @@
 import assert from 'assert'
+import * as core from '@actions/core'
+import * as fs from 'fs/promises'
 import { XMLParser } from 'fast-xml-parser'
 
 export type JunitXml = {
@@ -114,19 +116,36 @@ export const findTestCases = (junitXml: JunitXml): TestCase[] => {
 }
 
 type TestFile = {
-  file: string
-  time: number
+  filename: string
+  totalTime: number
+  totalTestCases: number
 }
 
 export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
   const testFiles = new Map<string, TestFile>()
   for (const testCase of testCases) {
     const currentTestFile = testFiles.get(testCase['@_file']) ?? {
-      file: testCase['@_file'],
-      time: 0,
+      filename: testCase['@_file'],
+      totalTime: 0,
+      totalTestCases: 0,
     }
-    currentTestFile.time += testCase['@_time']
+    currentTestFile.totalTime += testCase['@_time']
+    currentTestFile.totalTestCases++
     testFiles.set(testCase['@_file'], currentTestFile)
   }
   return [...testFiles.values()]
+}
+
+export const aggregateTestReports = async (testReportFiles: string[]): Promise<TestFile[]> => {
+  const allTestCases = []
+  for (const testReportFile of testReportFiles) {
+    core.info(`Parsing the test report: ${testReportFile}`)
+    const xml = await fs.readFile(testReportFile)
+    const junitXml = parseJunitXml(xml)
+    const testCases = findTestCases(junitXml)
+    allTestCases.push(...testCases)
+  }
+  core.info(`Found ${allTestCases.length} test cases in the test reports`)
+
+  return groupTestCasesByTestFile(allTestCases)
 }

@@ -2,6 +2,13 @@ name: parallel-test-action
 description: Template of TypeScript Action
 
 inputs:
+  working-directory:
+    description: Working directory
+    required: false
+    default: .
+  test-files:
+    description: Glob pattern of test files
+    required: true
   test-report-branch:
     description: Branch to find the test report artifacts
     required: true

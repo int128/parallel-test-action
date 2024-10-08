@@ -4,8 +4,8 @@ import * as path from 'path'
 import { DefaultArtifactClient, InvalidResponseError } from '@actions/artifact'
 
 type TestFile = {
-  file: string
-  time: number
+  filename: string
+  totalTime: number
 }
 
 export class Shard {
@@ -17,31 +17,53 @@ export class Shard {
   }
 
   add(testFile: TestFile): void {
-    this._estimatedTime += testFile.time
+    this._estimatedTime += testFile.totalTime
     this.testFiles.push(testFile)
   }
 }
 
-export const generateShards = (testFiles: TestFile[], shardCount: number): Shard[] => {
-  const shards = Array.from({ length: shardCount }, () => new Shard())
-  const sortedTestFiles = testFiles.slice().sort((a, b) => a.time - b.time)
-  for (const testFile of sortedTestFiles) {
-    const shard = shards.reduce((a, b) => (a.estimatedTime < b.estimatedTime ? a : b))
-    shard.add(testFile)
+const createShards = (count: number): Shard[] =>
+  Array(count)
+    .fill(null)
+    .map(() => new Shard())
+
+export const generateShards = (
+  workingTestFilenames: string[],
+  testFileEstimations: TestFile[],
+  shardCount: number,
+): Shard[] => {
+  const averageTestFileTime = average(testFileEstimations.map((f) => f.totalTime))
+  const workingTestFiles = workingTestFilenames.map((workingTestFilename) => {
+    const estimation = testFileEstimations.find((f) => f.filename === workingTestFilename)
+    return {
+      filename: workingTestFilename,
+      totalTime: estimation?.totalTime ?? averageTestFileTime,
+    }
+  })
+
+  const shards = createShards(shardCount)
+  for (const workingTestFile of workingTestFiles) {
+    sortShardsByEstimatedTime(shards)
+    const leastShard = shards[0]
+    leastShard.add(workingTestFile)
   }
   return shards
 }
 
-export const writeShardsWithLeaderElection = async (
+const average = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
+
+const sortShardsByEstimatedTime = (shards: Shard[]) => shards.sort((a, b) => a.estimatedTime - b.estimatedTime)
+
+export const leaderElect = async (
   shards: Shard[],
-  directory: string,
-  artifactName: string,
+  shardsDirectory: string,
+  shardsArtifactName: string,
 ): Promise<void> => {
-  const shardFilenames = await writeShards(shards, directory)
+  const shardFilenames = await writeShards(shards, shardsDirectory)
   const artifactClient = new DefaultArtifactClient()
   try {
-    await core.group(`Uploading artifact ${artifactName}`, () =>
-      artifactClient.uploadArtifact(artifactName, shardFilenames, directory),
+    await core.group(`Uploading artifact ${shardsArtifactName}`, () =>
+      artifactClient.uploadArtifact(shardsArtifactName, shardFilenames, shardsDirectory),
     )
     return
   } catch (e) {
@@ -52,17 +74,16 @@ export const writeShardsWithLeaderElection = async (
     }
   }
 
-  await fs.rm(directory, { recursive: true })
-  const existingArtifact = await artifactClient.getArtifact(artifactName)
-  await core.group(`Downloading artifact ${artifactName}`, () =>
-    artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: directory }),
+  await fs.rm(shardsDirectory, { recursive: true })
+  const existingArtifact = await artifactClient.getArtifact(shardsArtifactName)
+  await core.group(`Downloading artifact ${shardsArtifactName}`, () =>
+    artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
 }
 
 const writeShards = async (shards: Shard[], directory: string): Promise<string[]> => {
-  await fs.mkdir(directory, { recursive: true })
-
   core.info(`Writing shards:`)
+  await fs.mkdir(directory, { recursive: true })
   const shardFilenames = []
   for (const [index, shard] of shards.entries()) {
     const shardFilename = path.join(directory, `${index + 1}`)
