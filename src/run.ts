@@ -43,22 +43,25 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     repo: inputs.repo,
     token: inputs.token,
   })
-  core.info(`Found ${testReportFiles.length} test reports:`)
+  core.startGroup(`Found ${testReportFiles.length} test reports:`)
   for (const f of testReportFiles) {
     core.info(`- ${f}`)
   }
+  core.endGroup()
 
   const testFiles = await aggregateTestReports(testReportFiles)
   core.startGroup(`Found ${testFiles.length} test files in the test reports`)
   for (const f of testFiles.values()) {
-    core.info(`- ${f.filename}: ${f.totalTestCases} test cases, total ${f.totalTime}s`)
+    core.info(`- ${f.filename}: ${f.totalTestCases} test cases, total ${f.totalTime.toFixed(1)}s`)
   }
   core.endGroup()
 
   const shards = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shards.length} shards:`)
   for (const [i, shard] of shards.entries()) {
-    core.info(`- Shard #${i + 1}: ${shard.testFiles.length} test files, estimated ${shard.totalTime}s`)
+    core.info(
+      `- Shard #${i + 1}: ${shard.testFiles.length} test files, ${shard.totalTestCases} test cases, estimated ${shard.totalTime.toFixed(1)}s`,
+    )
   }
 
   const shardsDirectory = path.join(tempDirectory, 'shards')

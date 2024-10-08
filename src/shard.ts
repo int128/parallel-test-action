@@ -7,14 +7,17 @@ import { DefaultArtifactClient } from '@actions/artifact'
 type TestFile = {
   filename: string
   totalTime: number
+  totalTestCases: number
 }
 
 export class Shard {
   totalTime: number = 0
+  totalTestCases: number = 0
   readonly testFiles: TestFile[] = []
 
   add(testFile: TestFile): void {
     this.totalTime += testFile.totalTime
+    this.totalTestCases += testFile.totalTestCases
     this.testFiles.push(testFile)
   }
 }
@@ -43,6 +46,7 @@ export const generateShards = (
 
 const estimateWorkingTestFiles = (workingTestFilenames: string[], reportedTestFiles: TestFile[]): TestFile[] => {
   const averageTime = averageOf(reportedTestFiles.map((f) => f.totalTime))
+  const averageTestCases = Math.ceil(averageOf(reportedTestFiles.map((f) => f.totalTestCases)))
   const reportedTestFileByName = new Map(reportedTestFiles.map((f) => [f.filename, f]))
 
   const workingTestFiles = []
@@ -52,6 +56,7 @@ const estimateWorkingTestFiles = (workingTestFilenames: string[], reportedTestFi
       filename: workingTestFilename,
       // If the test file does not exist in the test reports, we assume the average time.
       totalTime: reportedTestFile?.totalTime ?? averageTime,
+      totalTestCases: reportedTestFile?.totalTestCases ?? averageTestCases,
     })
   }
   return workingTestFiles
@@ -70,7 +75,7 @@ export const writeShardsWithLeaderElection = async (
 
   core.info(`Acquiring the leadership of shards`)
   const shardFilenames = await writeShards(shards, shardsDirectory)
-  const uploadArtifactError = await core.group(`Uploading artifact ${shardsArtifactName}`, () =>
+  const uploadArtifactError = await core.group(`Uploading the artifact: ${shardsArtifactName}`, () =>
     catchHttp409ConflictError(async () => {
       await artifactClient.uploadArtifact(shardsArtifactName, shardFilenames, shardsDirectory)
     }),
@@ -84,7 +89,7 @@ export const writeShardsWithLeaderElection = async (
   core.info(`Finding the shards of the leader`)
   const existingArtifact = await artifactClient.getArtifact(shardsArtifactName)
   await fs.rm(shardsDirectory, { recursive: true })
-  await core.group(`Downloading artifact ${shardsArtifactName} of the leader`, () =>
+  await core.group(`Downloading the artifact: ${shardsArtifactName}`, () =>
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
   const shardGlobber = await glob.create(path.join(shardsDirectory, '*'))
