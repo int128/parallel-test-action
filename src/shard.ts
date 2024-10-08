@@ -4,18 +4,25 @@ import * as glob from '@actions/glob'
 import * as path from 'path'
 import { ArtifactNotFoundError, DefaultArtifactClient } from '@actions/artifact'
 
-type TestFile = {
+type ReportedTestFile = {
   filename: string
   totalTime: number
   totalTestCases: number
 }
 
-export class Shard {
+type WorkingTestFile = {
+  filename: string
+  existsInTestReports: boolean
+  totalTime: number
+  totalTestCases: number
+}
+
+class Shard {
   totalTime: number = 0
   totalTestCases: number = 0
-  readonly testFiles: TestFile[] = []
+  readonly testFiles: WorkingTestFile[] = []
 
-  add(testFile: TestFile): void {
+  add(testFile: WorkingTestFile): void {
     this.totalTime += testFile.totalTime
     this.totalTestCases += testFile.totalTestCases
     this.testFiles.push(testFile)
@@ -27,11 +34,49 @@ const createShards = (count: number): Shard[] =>
     .fill(null)
     .map(() => new Shard())
 
+type ShardSet = {
+  shards: Shard[]
+  workingTestFiles: WorkingTestFile[]
+}
+
+export const writeShardSummary = (shardSet: ShardSet) => {
+  core.summary.addHeading('parallel-test-action')
+  core.summary.addHeading('Shards', 2)
+  core.summary.addTable([
+    [
+      { data: 'Index', header: true },
+      { data: 'Test files', header: true },
+      { data: 'Estimated test cases', header: true },
+      { data: 'Estimated time (s)', header: true },
+    ],
+    ...shardSet.shards.map((shard, i) => [
+      `#${i + 1}`,
+      `${shard.testFiles.length}`,
+      `${shard.totalTestCases}`,
+      shard.totalTime.toFixed(1),
+    ]),
+  ])
+
+  core.summary.addHeading('Test files in the working directory', 2)
+  core.summary.addTable([
+    [
+      { data: 'Test file', header: true },
+      { data: 'Test cases', header: true },
+      { data: 'Total time (s)', header: true },
+    ],
+    ...shardSet.workingTestFiles.map((f) =>
+      f.existsInTestReports
+        ? [f.filename, `${f.totalTestCases}`, f.totalTime.toFixed(1)]
+        : [f.filename, '-', `${f.totalTime.toFixed(1)} (no report)`],
+    ),
+  ])
+}
+
 export const generateShards = (
   workingTestFilenames: string[],
-  reportedTestFiles: TestFile[],
+  reportedTestFiles: ReportedTestFile[],
   shardCount: number,
-): Shard[] => {
+): ShardSet => {
   const workingTestFiles = estimateWorkingTestFiles(workingTestFilenames, reportedTestFiles)
   sortByTime(workingTestFiles).reverse()
 
@@ -41,12 +86,14 @@ export const generateShards = (
     const leastShard = shards[0]
     leastShard.add(workingTestFile)
   }
-  return shards
+  return { shards, workingTestFiles }
 }
 
-const estimateWorkingTestFiles = (workingTestFilenames: string[], reportedTestFiles: TestFile[]): TestFile[] => {
+const estimateWorkingTestFiles = (
+  workingTestFilenames: string[],
+  reportedTestFiles: ReportedTestFile[],
+): WorkingTestFile[] => {
   const averageTime = averageOf(reportedTestFiles.map((f) => f.totalTime))
-  const averageTestCases = Math.ceil(averageOf(reportedTestFiles.map((f) => f.totalTestCases)))
   const reportedTestFileByName = new Map(reportedTestFiles.map((f) => [f.filename, f]))
 
   const workingTestFiles = []
@@ -54,9 +101,10 @@ const estimateWorkingTestFiles = (workingTestFilenames: string[], reportedTestFi
     const reportedTestFile = reportedTestFileByName.get(workingTestFilename)
     workingTestFiles.push({
       filename: workingTestFilename,
+      existsInTestReports: reportedTestFile !== undefined,
       // If the test file does not exist in the test reports, we assume the average time.
       totalTime: reportedTestFile?.totalTime ?? averageTime,
-      totalTestCases: reportedTestFile?.totalTestCases ?? averageTestCases,
+      totalTestCases: reportedTestFile?.totalTestCases ?? 1,
     })
   }
   return workingTestFiles
