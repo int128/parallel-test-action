@@ -4,7 +4,7 @@ import { findTestCases, groupTestCasesByTestFile, parseJunitXml, TestCase } from
 
 describe('parseJunitXml', () => {
   it('should parse fixture.xml', async () => {
-    const xml = await fs.readFile(path.join(__dirname, 'fixture.xml'))
+    const xml = await fs.readFile(path.join(__dirname, 'fixtures/fixture.xml'))
     expect(() => parseJunitXml(xml)).not.toThrow()
   })
 })
