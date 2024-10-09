@@ -44,17 +44,17 @@ export type ShardSet = {
   workingTestFiles: WorkingTestFile[]
 }
 
-export const generateShards = (
+export const distributeTestFilesToShards = (
   workingTestFilenames: string[],
   reportedTestFiles: ReportedTestFile[],
   shardCount: number,
 ): ShardSet => {
   const workingTestFiles = estimateWorkingTestFiles(workingTestFilenames, reportedTestFiles)
-  sortByTime(workingTestFiles).reverse()
+  workingTestFiles.sort(byTotalTimeDescending)
 
   const shards = createShards(shardCount)
   for (const workingTestFile of workingTestFiles) {
-    sortByTime(shards)
+    shards.sort(byTotalTimeOrCountAscending)
     const leastShard = shards[0]
     leastShard.add(workingTestFile)
     workingTestFile.assignedShardId = leastShard.id
@@ -62,11 +62,25 @@ export const generateShards = (
   return { shards, workingTestFiles }
 }
 
+const byTotalTimeDescending = <E extends WorkingTestFile>(a: E, b: E) => b.totalTime - a.totalTime
+
+const byTotalTimeOrCountAscending = <E extends Shard>(a: E, b: E) => {
+  if (a.totalTime !== b.totalTime) {
+    return a.totalTime - b.totalTime
+  }
+  if (a.totalTestCases !== b.totalTestCases) {
+    return a.totalTestCases - b.totalTestCases
+  }
+  // If no test report is given, fallback to round-robin.
+  return a.testFiles.length - b.testFiles.length
+}
+
 const estimateWorkingTestFiles = (
   workingTestFilenames: string[],
   reportedTestFiles: ReportedTestFile[],
 ): WorkingTestFile[] => {
-  const averageTime = averageOf(reportedTestFiles.map((f) => f.totalTime))
+  const averageTimePerTestFile = averageOf(reportedTestFiles.map((f) => f.totalTime))
+  const averageTestCasesPerTestFile = Math.ceil(averageOf(reportedTestFiles.map((f) => f.totalTestCases)))
   const reportedTestFileByName = new Map(reportedTestFiles.map((f) => [f.filename, f]))
 
   const workingTestFiles = []
@@ -76,8 +90,8 @@ const estimateWorkingTestFiles = (
       filename: workingTestFilename,
       existsInTestReports: reportedTestFile !== undefined,
       // If the test file does not exist in the test reports, we assume the average time.
-      totalTime: reportedTestFile?.totalTime ?? averageTime,
-      totalTestCases: reportedTestFile?.totalTestCases ?? 1,
+      totalTime: reportedTestFile?.totalTime ?? averageTimePerTestFile,
+      totalTestCases: reportedTestFile?.totalTestCases ?? averageTestCasesPerTestFile,
     })
   }
   return workingTestFiles
@@ -89,8 +103,6 @@ const averageOf = (a: number[]) => {
   }
   return a.reduce((x, y) => x + y, 0) / a.length
 }
-
-const sortByTime = <E extends { totalTime: number }>(shards: E[]) => shards.sort((a, b) => a.totalTime - b.totalTime)
 
 export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, shardsArtifactName: string) => {
   const artifactClient = new DefaultArtifactClient()
