@@ -14,14 +14,19 @@ type Inputs = {
   token: string
 }
 
-export const downloadLastTestReports = async (octokit: Octokit, inputs: Inputs) => {
+export type TestReportSet = {
+  testReportFiles: string[]
+  workflowRunUrl?: string
+}
+
+export const downloadLastTestReports = async (octokit: Octokit, inputs: Inputs): Promise<TestReportSet> => {
   const lastWorkflowRun = await findLastWorkflowRun(octokit, inputs)
   if (lastWorkflowRun === undefined) {
-    return []
+    return { testReportFiles: [] }
   }
   const testReportArtifacts = await findTestReportArtifacts(octokit, inputs, lastWorkflowRun.id)
   if (testReportArtifacts.length === 0) {
-    return []
+    return { testReportFiles: [] }
   }
 
   const artifactClient = new DefaultArtifactClient()
@@ -39,7 +44,11 @@ export const downloadLastTestReports = async (octokit: Octokit, inputs: Inputs) 
     )
   }
   const testReportGlobber = await glob.create(path.join(inputs.testReportDirectory, '*/*.xml'))
-  return await testReportGlobber.glob()
+  const testReportFiles = await testReportGlobber.glob()
+  return {
+    testReportFiles,
+    workflowRunUrl: lastWorkflowRun.html_url,
+  }
 }
 
 const findLastWorkflowRun = async (octokit: Octokit, inputs: Inputs) => {
