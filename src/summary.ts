@@ -54,9 +54,9 @@ export const writeSummary = (shardSet: ShardSet, testReportSet: TestReportSet) =
   if (testReportSet.workflowRunUrl) {
     core.summary.addRaw('This action downloaded the test reports from ')
     core.summary.addLink('the last success workflow run', testReportSet.workflowRunUrl)
-    core.summary.addRaw('.', true)
   }
   if (testReportSet.testReportFiles.length > 0) {
+    core.summary.addRaw('Files:', true)
     core.summary.addList(testReportSet.testReportFiles)
   } else {
     core.summary.addRaw('No test reports found')
