@@ -59,6 +59,7 @@ export const distributeTestFilesToShards = (
     leastShard.add(workingTestFile)
     workingTestFile.assignedShardId = leastShard.id
   }
+  shards.sort(byId)
   return { shards, workingTestFiles }
 }
 
@@ -74,6 +75,8 @@ const byTotalTimeOrCountAscending = <E extends Shard>(a: E, b: E) => {
   // If no test report is given, fallback to round-robin.
   return a.testFiles.length - b.testFiles.length
 }
+
+const byId = <E extends { id: number }>(a: E, b: E) => a.id - b.id
 
 const estimateWorkingTestFiles = (
   workingTestFilenames: string[],
