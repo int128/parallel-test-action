@@ -12,8 +12,8 @@ inputs:
   test-report-branch:
     description: Branch to find the test report artifacts
     required: true
-  test-report-artifact-name-prefix:
-    description: Prefix of the test report artifact name
+  test-report-artifact-name-regexp:
+    description: Pattern of the test report artifact name
     required: true
   shard-count:
     description: Number of shards

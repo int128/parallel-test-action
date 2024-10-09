@@ -7,7 +7,7 @@ import { Octokit } from './github'
 type Inputs = {
   testReportWorkflow: string
   testReportBranch: string
-  testReportArtifactNamePrefix: string
+  testReportArtifactNameRegExp: RegExp
   testReportDirectory: string
   owner: string
   repo: string
@@ -88,7 +88,7 @@ const findTestReportArtifacts = async (octokit: Octokit, inputs: Inputs, lastWor
     )
   }
   const testReportArtifacts = listArtifacts.filter((workflowRunArtifact) =>
-    workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix),
+    workflowRunArtifact.name.match(inputs.testReportArtifactNameRegExp),
   )
   core.info(`Filtered ${testReportArtifacts.length} artifacts of the test reports`)
   return testReportArtifacts
