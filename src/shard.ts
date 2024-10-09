@@ -92,7 +92,7 @@ const averageOf = (a: number[]) => {
 
 const sortByTime = <E extends { totalTime: number }>(shards: E[]) => shards.sort((a, b) => a.totalTime - b.totalTime)
 
-export const tryDownloadShards = async (shardsDirectory: string, shardsArtifactName: string) => {
+export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, shardsArtifactName: string) => {
   const artifactClient = new DefaultArtifactClient()
   let existingArtifact
   try {
@@ -103,7 +103,7 @@ export const tryDownloadShards = async (shardsDirectory: string, shardsArtifactN
     }
     throw e
   }
-  core.info(`Another job has locked the shards`)
+  core.info(`Another job has already uploaded the shards`)
   await core.group(`Downloading the artifact: ${shardsArtifactName}`, () =>
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
@@ -121,7 +121,7 @@ export const writeShardsWithLock = async (
 ): Promise<Lock> => {
   const artifactClient = new DefaultArtifactClient()
 
-  core.info(`Acquiring a lock of shards`)
+  core.info(`Acquiring a lock of shards artifact`)
   const shardFilenames = await writeShards(shards, shardsDirectory)
   const conflictError = await core.group(`Uploading the artifact: ${shardsArtifactName}`, () =>
     catchHttp409ConflictError(async () => {
@@ -129,12 +129,12 @@ export const writeShardsWithLock = async (
     }),
   )
   if (!conflictError) {
-    core.info(`This job acquired the lock of shards`)
+    core.info(`This job successfully uploaded the shards. Others will download the shards.`)
     return { currentJobAcquiredLock: true }
   }
 
-  core.info(`Another job has locked the shards: ${conflictError}`)
-  core.info(`This job will download the existing shards`)
+  core.info(`Another job already uploaded the shards: ${conflictError}`)
+  core.info(`This job downloads the existing shards`)
   // For eventual consistency, GetArtifact may return ArtifactNotFoundError just after UploadArtifact.
   const existingArtifact = await retryArtifactNotFoundError(() => artifactClient.getArtifact(shardsArtifactName))
   await fs.rm(shardsDirectory, { recursive: true })

@@ -6,7 +6,7 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { tryDownloadShards, generateShards, writeShardsWithLock } from './shard'
+import { tryDownloadShardsIfAlreadyExists, generateShards, writeShardsWithLock } from './shard'
 import { writeSummary } from './summary'
 
 type Inputs = {
@@ -36,7 +36,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const shardsDirectory = path.join(tempDirectory, 'shards')
 
   // Since multiple jobs run in parallel, another job may have already uploaded the shards.
-  if (await tryDownloadShards(shardsDirectory, inputs.shardsArtifactName)) {
+  if (await tryDownloadShardsIfAlreadyExists(shardsDirectory, inputs.shardsArtifactName)) {
     await showListofShardFiles(shardsDirectory)
     return { shardsDirectory }
   }
