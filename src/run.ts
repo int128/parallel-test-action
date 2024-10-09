@@ -13,7 +13,7 @@ type Inputs = {
   workingDirectory: string
   testFiles: string
   testReportBranch: string
-  testReportArtifactNamePrefix: string
+  testReportArtifactNameRegExp: string
   shardCount: number
   shardsArtifactName: string
   owner: string
@@ -44,7 +44,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
   const testReportSet = await downloadLastTestReports(octokit, {
     testReportBranch: inputs.testReportBranch,
-    testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
+    testReportArtifactNameRegExp: new RegExp(inputs.testReportArtifactNameRegExp),
     testReportWorkflow: inputs.workflowFilename,
     testReportDirectory,
     owner: inputs.owner,

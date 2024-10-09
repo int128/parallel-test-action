@@ -8,7 +8,7 @@ const main = async (): Promise<void> => {
     workingDirectory: core.getInput('working-directory', { required: true }),
     testFiles: core.getInput('test-files', { required: true }),
     testReportBranch: core.getInput('test-report-branch', { required: true }),
-    testReportArtifactNamePrefix: core.getInput('test-report-artifact-name-prefix', { required: true }),
+    testReportArtifactNameRegExp: core.getInput('test-report-artifact-name-regexp', { required: true }),
     shardCount: parseInt(core.getInput('shard-count', { required: true })),
     shardsArtifactName: core.getInput('shards-artifact-name', { required: true }),
     owner: github.context.repo.owner,

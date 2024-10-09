@@ -26,7 +26,7 @@ jobs:
         with:
           test-files: 'tests/**/*.test.ts'
           test-report-branch: main
-          test-report-artifact-name-prefix: test-report-
+          test-report-artifact-name-regexp: test-report-\d+
           shard-count: 3
       - uses: actions/setup-node@v4
       # ...snip...
@@ -72,7 +72,7 @@ Your testing framework should run the test files in the shard file.
 | `working-directory`                | `.`                    | Working directory                        |
 | `test-files`                       | (required)             | Glob pattern of test files               |
 | `test-report-branch`               | (required)             | Branch to find the test report artifacts |
-| `test-report-artifact-name-prefix` | (required)             | Prefix of the test report artifact name  |
+| `test-report-artifact-name-regexp` | (required)             | Pattern of the test report artifact name |
 | `shard-count`                      | (required)             | Number of shards                         |
 | `shards-artifact-name`             | `parallel-test-shards` | Name of the shards artifact              |
 | `token`                            | (github.token)         | GitHub token                             |

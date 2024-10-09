@@ -42,7 +42,7 @@ jobs:
         with:
           test-files: 'tests/**/*.test.ts'
           test-report-branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
-          test-report-artifact-name-prefix: test-report-
+          test-report-artifact-name-regexp: ^test-report-\d+$
           shard-count: 2
       - run: cat "$SHARD_FILE"
         env:
