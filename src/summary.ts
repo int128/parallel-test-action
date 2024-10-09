@@ -14,7 +14,7 @@ export const writeSummary = (shardSet: ShardSet, testReportSet: TestReportSet) =
       { data: 'ID', header: true },
       { data: 'Test files', header: true },
       { data: 'Estimated test cases', header: true },
-      { data: 'Estimated time (s)', header: true },
+      { data: 'Estimated time (m:s)', header: true },
     ],
     ...shardSet.shards.map((shard) => [
       `#${shard.id}`,
@@ -35,7 +35,7 @@ export const writeSummary = (shardSet: ShardSet, testReportSet: TestReportSet) =
     [
       { data: 'Test file', header: true },
       { data: 'Test cases', header: true },
-      { data: 'Total time (s)', header: true },
+      { data: 'Total time (m:s)', header: true },
       { data: 'Shard', header: true },
     ],
     ...shardSet.workingTestFiles.map((f) => [
@@ -52,8 +52,9 @@ export const writeSummary = (shardSet: ShardSet, testReportSet: TestReportSet) =
 
   core.summary.addHeading('Test reports', 2)
   if (testReportSet.workflowRunUrl) {
-    core.summary.addRaw('This action downloaded the test reports from')
+    core.summary.addRaw('This action downloaded the test reports from ')
     core.summary.addLink('the last success workflow run', testReportSet.workflowRunUrl)
+    core.summary.addRaw('.', true)
   }
   if (testReportSet.testReportFiles.length > 0) {
     core.summary.addList(testReportSet.testReportFiles)
