@@ -12,8 +12,8 @@ import { writeSummary } from './summary'
 type Inputs = {
   workingDirectory: string
   testFiles: string
-  testReportBranch: string
   testReportArtifactNamePrefix: string
+  testReportBranch: string
   shardCount: number
   shardsArtifactName: string
   owner: string
@@ -43,8 +43,8 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
   const testReportSet = await downloadLastTestReports(octokit, {
-    testReportBranch: inputs.testReportBranch,
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
+    testReportBranch: inputs.testReportBranch,
     testReportWorkflow: inputs.workflowFilename,
     testReportDirectory,
     owner: inputs.owner,

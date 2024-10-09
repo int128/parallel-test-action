@@ -9,11 +9,11 @@ inputs:
   test-files:
     description: Glob pattern of test files
     required: true
-  test-report-branch:
-    description: Branch to find the test report artifacts
-    required: true
   test-report-artifact-name-prefix:
     description: Prefix of the test report artifact name
+    required: true
+  test-report-branch:
+    description: Branch to find the test report artifacts
     required: true
   shard-count:
     description: Number of shards
