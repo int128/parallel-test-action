@@ -24,9 +24,9 @@ export const writeSummary = (shardSet: ShardSet, testReportSet: TestReportSet) =
     ]),
     [
       { data: 'Total', header: true },
-      { data: `${shardSet.shards.reduce((x, y) => x + y.testFiles.length, 0)}`, header: true },
-      { data: `${shardSet.shards.reduce((x, y) => x + y.totalTestCases, 0)}`, header: true },
-      { data: formatTimeInMinSec(shardSet.shards.reduce((x, y) => x + y.totalTime, 0)), header: true },
+      { data: `${shardSet.shards.reduce((x, y) => x + y.testFiles.length, 0)}` },
+      { data: `${shardSet.shards.reduce((x, y) => x + y.totalTestCases, 0)}` },
+      { data: formatTimeInMinSec(shardSet.shards.reduce((x, y) => x + y.totalTime, 0)) },
     ],
   ])
 
@@ -55,7 +55,11 @@ export const writeSummary = (shardSet: ShardSet, testReportSet: TestReportSet) =
     core.summary.addRaw('This action downloaded the test reports from')
     core.summary.addLink('the last success workflow run', testReportSet.workflowRunUrl)
   }
-  core.summary.addList(testReportSet.testReportFiles)
+  if (testReportSet.testReportFiles.length > 0) {
+    core.summary.addList(testReportSet.testReportFiles)
+  } else {
+    core.summary.addRaw('No test reports found')
+  }
 }
 
 export const formatTimeInMinSec = (seconds: number): string => {
