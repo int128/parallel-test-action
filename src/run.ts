@@ -6,7 +6,7 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { tryDownloadShardsIfAlreadyExists, generateShards, writeShardsWithLock } from './shard'
+import { tryDownloadShardsIfAlreadyExists, distributeTestFilesToShards, writeShardsWithLock } from './shard'
 import { writeSummary } from './summary'
 
 type Inputs = {
@@ -55,7 +55,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const allTestCases = await findTestCasesFromTestReportFiles(testReportSet.testReportFiles)
   core.info(`Found ${allTestCases.length} test cases in the test reports`)
   const testFiles = groupTestCasesByTestFile(allTestCases)
-  const shardSet = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
+  const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)
 
   const shardsLock = await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
