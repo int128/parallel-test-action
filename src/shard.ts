@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
-import * as glob from '@actions/glob'
 import * as path from 'path'
 import { ArtifactNotFoundError, DefaultArtifactClient } from '@actions/artifact'
 
@@ -93,46 +92,56 @@ const averageOf = (a: number[]) => {
 
 const sortByTime = <E extends { totalTime: number }>(shards: E[]) => shards.sort((a, b) => a.totalTime - b.totalTime)
 
-type LeaderElection = {
-  shardFilenames: string[]
-  leader: boolean
+export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, shardsArtifactName: string) => {
+  const artifactClient = new DefaultArtifactClient()
+  let existingArtifact
+  try {
+    existingArtifact = await artifactClient.getArtifact(shardsArtifactName)
+  } catch (e) {
+    if (e instanceof ArtifactNotFoundError) {
+      return false
+    }
+    throw e
+  }
+  core.info(`Another job has already uploaded the shards`)
+  await core.group(`Downloading the artifact: ${shardsArtifactName}`, () =>
+    artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
+  )
+  return true
 }
 
-export const writeShardsWithLeaderElection = async (
+type Lock = {
+  currentJobAcquiredLock: boolean
+}
+
+export const writeShardsWithLock = async (
   shards: Shard[],
   shardsDirectory: string,
   shardsArtifactName: string,
-): Promise<LeaderElection> => {
+): Promise<Lock> => {
   const artifactClient = new DefaultArtifactClient()
 
-  core.info(`Acquiring the leadership of shards`)
+  core.info(`Acquiring a lock of shards artifact`)
   const shardFilenames = await writeShards(shards, shardsDirectory)
-  const uploadArtifactError = await core.group(`Uploading the artifact: ${shardsArtifactName}`, () =>
+  const conflictError = await core.group(`Uploading the artifact: ${shardsArtifactName}`, () =>
     catchHttp409ConflictError(async () => {
       await artifactClient.uploadArtifact(shardsArtifactName, shardFilenames, shardsDirectory)
     }),
   )
-  if (!uploadArtifactError) {
-    core.info(`This job becomes the leader`)
-    return {
-      shardFilenames,
-      leader: true,
-    }
+  if (!conflictError) {
+    core.info(`This job successfully uploaded the shards. Others will download the shards.`)
+    return { currentJobAcquiredLock: true }
   }
 
-  core.info(`Another job has the leadership: ${uploadArtifactError}`)
-  core.info(`Finding the shards of the leader`)
+  core.info(`Another job already uploaded the shards: ${conflictError}`)
+  core.info(`This job downloads the existing shards`)
   // For eventual consistency, GetArtifact may return ArtifactNotFoundError just after UploadArtifact.
   const existingArtifact = await retryArtifactNotFoundError(() => artifactClient.getArtifact(shardsArtifactName))
   await fs.rm(shardsDirectory, { recursive: true })
   await core.group(`Downloading the artifact: ${shardsArtifactName}`, () =>
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
-  const shardGlobber = await glob.create(path.join(shardsDirectory, '*'))
-  return {
-    shardFilenames: await shardGlobber.glob(),
-    leader: false,
-  }
+  return { currentJobAcquiredLock: false }
 }
 
 const catchHttp409ConflictError = async (f: () => Promise<void>): Promise<undefined | Error> => {

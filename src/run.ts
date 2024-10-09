@@ -6,7 +6,7 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { generateShards, writeShardsWithLeaderElection } from './shard'
+import { tryDownloadShardsIfAlreadyExists, generateShards, writeShardsWithLock } from './shard'
 import { writeSummary } from './summary'
 
 type Inputs = {
@@ -33,6 +33,13 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   const octokit = getOctokit(inputs.token)
   const tempDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
+  const shardsDirectory = path.join(tempDirectory, 'shards')
+
+  // Since multiple jobs run in parallel, another job may have already uploaded the shards.
+  if (await tryDownloadShardsIfAlreadyExists(shardsDirectory, inputs.shardsArtifactName)) {
+    await showListofShardFiles(shardsDirectory)
+    return { shardsDirectory }
+  }
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
   const testReportSet = await downloadLastTestReports(octokit, {
@@ -51,21 +58,22 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const shardSet = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)
 
-  const shardsDirectory = path.join(tempDirectory, 'shards')
-  const leaderElection = await writeShardsWithLeaderElection(
-    shardSet.shards,
-    shardsDirectory,
-    inputs.shardsArtifactName,
-  )
-  if (leaderElection.leader) {
+  const shardsLock = await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
+  if (shardsLock.currentJobAcquiredLock) {
     writeSummary(shardSet, testReportSet)
   }
 
-  core.info(`Available ${leaderElection.shardFilenames.length} shard files:`)
-  for (const shardFilename of leaderElection.shardFilenames) {
-    core.info(`- ${shardFilename}`)
-  }
+  await showListofShardFiles(shardsDirectory)
   return { shardsDirectory }
+}
+
+const showListofShardFiles = async (shardsDirectory: string) => {
+  const globber = await glob.create(path.join(shardsDirectory, '*'))
+  const files = await globber.glob()
+  core.info(`Available ${files.length} shard files:`)
+  for (const f of files) {
+    core.info(`- ${f}`)
+  }
 }
 
 const globRelative = async (pattern: string) => {
