@@ -27,8 +27,8 @@ jobs:
         id: parallel-test
         with:
           test-files: 'tests/**/*.test.ts'
-          test-report-branch: main
           test-report-artifact-name-prefix: test-report-
+          test-report-branch: main
           shard-count: 3
       - uses: actions/setup-node@v4
       # ...snip...
@@ -57,8 +57,8 @@ jobs:
         id: parallel-test
         with:
           test-files: 'spec/**/*_spec.rb'
-          test-report-branch: main
           test-report-artifact-name-prefix: test-report-
+          test-report-branch: main
           shard-count: 3
       - uses: ruby/setup-ruby@v1
       # ...snip...
@@ -111,8 +111,8 @@ you need to explicitly set the `shards-artifact-name` to avoid the conflict.
 | ---------------------------------- | ---------------------- | ---------------------------------------- |
 | `working-directory`                | `.`                    | Working directory                        |
 | `test-files`                       | (required)             | Glob pattern of test files               |
-| `test-report-branch`               | (required)             | Branch to find the test report artifacts |
 | `test-report-artifact-name-prefix` | (required)             | Prefix of the test report artifact name  |
+| `test-report-branch`               | (required)             | Branch to find the test report artifacts |
 | `shard-count`                      | (required)             | Number of shards                         |
 | `shards-artifact-name`             | `parallel-test-shards` | Name of the shards artifact              |
 | `token`                            | (github.token)         | GitHub token                             |

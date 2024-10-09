@@ -6,8 +6,8 @@ import { Octokit } from './github'
 
 type Inputs = {
   testReportWorkflow: string
-  testReportBranch: string
   testReportArtifactNamePrefix: string
+  testReportBranch: string
   testReportDirectory: string
   owner: string
   repo: string
