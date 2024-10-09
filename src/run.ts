@@ -6,7 +6,8 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { generateShards, writeShardSummary, writeShardsWithLeaderElection } from './shard'
+import { generateShards, writeShardsWithLeaderElection } from './shard'
+import { writeSummary } from './summary'
 
 type Inputs = {
   workingDirectory: string
@@ -34,7 +35,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const tempDirectory = await fs.mkdtemp(`${process.env.RUNNER_TEMP || os.tmpdir()}/parallel-test-action-`)
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
-  const testReportFiles = await downloadLastTestReports(octokit, {
+  const testReportSet = await downloadLastTestReports(octokit, {
     testReportBranch: inputs.testReportBranch,
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
     testReportWorkflow: inputs.workflowFilename,
@@ -44,7 +45,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     token: inputs.token,
   })
 
-  const allTestCases = await findTestCasesFromTestReportFiles(testReportFiles)
+  const allTestCases = await findTestCasesFromTestReportFiles(testReportSet.testReportFiles)
   core.info(`Found ${allTestCases.length} test cases in the test reports`)
   const testFiles = groupTestCasesByTestFile(allTestCases)
   const shardSet = generateShards(workingTestFilenames, testFiles, inputs.shardCount)
@@ -57,7 +58,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     inputs.shardsArtifactName,
   )
   if (leaderElection.leader) {
-    writeShardSummary(shardSet)
+    writeSummary(shardSet, testReportSet)
   }
 
   core.info(`Available ${leaderElection.shardFilenames.length} shard files:`)

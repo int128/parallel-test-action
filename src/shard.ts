@@ -40,48 +40,9 @@ const createShards = (count: number): Shard[] =>
     .fill(null)
     .map((_, index) => new Shard(index + 1))
 
-type ShardSet = {
+export type ShardSet = {
   shards: Shard[]
   workingTestFiles: WorkingTestFile[]
-}
-
-export const writeShardSummary = (shardSet: ShardSet) => {
-  core.summary.addHeading('parallel-test-action')
-  core.summary.addHeading('Shards', 2)
-  core.summary.addTable([
-    [
-      { data: 'ID', header: true },
-      { data: 'Test files', header: true },
-      { data: 'Estimated test cases', header: true },
-      { data: 'Estimated time (s)', header: true },
-    ],
-    ...shardSet.shards.map((shard) => [
-      `#${shard.id}`,
-      `${shard.testFiles.length}`,
-      `${shard.totalTestCases}`,
-      shard.totalTime.toFixed(1),
-    ]),
-  ])
-
-  core.summary.addHeading('Test files in the working directory', 2)
-  core.summary.addTable([
-    [
-      { data: 'Test file', header: true },
-      { data: 'Test cases', header: true },
-      { data: 'Total time (s)', header: true },
-      { data: 'Shard', header: true },
-    ],
-    ...shardSet.workingTestFiles.map((f) => {
-      let shardId = '-'
-      if (f.assignedShardId !== undefined) {
-        shardId = `#${f.assignedShardId}`
-      }
-      if (f.existsInTestReports) {
-        return [f.filename, `${f.totalTestCases}`, f.totalTime.toFixed(1), shardId]
-      }
-      return [f.filename, '-', `no report (${f.totalTime.toFixed(1)})`, shardId]
-    }),
-  ])
 }
 
 export const generateShards = (
