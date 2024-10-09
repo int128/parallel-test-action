@@ -1,5 +1,5 @@
 name: parallel-test-action
-description: Template of TypeScript Action
+description: Distribute the test files to the shards based on the estimated time from the test reports
 
 inputs:
   working-directory:
@@ -25,10 +25,11 @@ inputs:
   token:
     description: GitHub token
     required: true
+    default: ${{ github.token }}
 
 outputs:
   shards-directory:
-    description: Directory of the shards
+    description: Directory to store the shard files
 
 runs:
   using: 'node20'

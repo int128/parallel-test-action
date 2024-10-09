@@ -44,10 +44,9 @@ jobs:
           test-report-branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           test-report-artifact-name-prefix: test-report-
           shard-count: 2
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - run: cat "$SHARD_FILENAME"
+      - run: cat "$SHARD_FILE"
         env:
-          SHARD_FILENAME: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id}}
+          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
       - run: pnpm run test
       - uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
         with:
