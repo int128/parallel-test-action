@@ -76,6 +76,24 @@ jobs:
 
 ### Test files distribution
 
+Here is the diagram of inputs and outputs of this action.
+
+```mermaid
+graph TB
+  LTR[Test Reports of the last workflow run] --> A
+  subgraph Test Job #1
+    A[parallel-test-action]
+    WT1[Test Files in the working directory] --> A
+    subgraph SF[Shard Files]
+      S1[Shard #1]
+      S2[Shard #2]
+      S3[Shard #N]
+    end
+    A --> SF
+    S1 --> T[Testing Framework] --> TR[Test Report #i]
+  end
+```
+
 You need to upload the test reports as artifacts on the default branch.
 It is required to estimate the time of each test file.
 
