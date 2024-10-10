@@ -111,9 +111,7 @@ graph TB
 You need to upload the test reports as artifacts on the default branch.
 It is required to estimate the time of each test file.
 
-This action distibutes the test files based on the estimated time.
-For now, it adopts the greedy algorithm to distribute the test files.
-
+This action distibutes the test files based on the estimated time using the greedy algorithm.
 Here is the example of the distribution:
 
 ```mermaid
@@ -142,16 +140,13 @@ Each shard should contain the test files with the similar estimated time.
 If a test file is not found in the test reports, this action assumes the average time of all test files.
 If no test report is given, this action falls back to the round-robin distribution.
 
-### Lock in parallel jobs
+### Lock for parallel jobs in a workflow
 
 When this action is run in parallel jobs, each job may generate the different shard files.
 To avoid the race condition, this action acquires the lock by uploading the shards artifact.
 
 1. The first job acquires the lock by uploading the shards artifact.
-2. The other jobs download the shards artifact and use it. Their generated shard files are discarded.
-
-If your workflow contains the different test jobs,
-you need to explicitly set the `shards-artifact-name` to avoid the conflict.
+2. The other jobs will download the shards artifact and use it. Their generated shards will be discarded.
 
 ## Specification
 
@@ -166,6 +161,9 @@ you need to explicitly set the `shards-artifact-name` to avoid the conflict.
 | `shard-count`                      | (required)             | Number of shards                         |
 | `shards-artifact-name`             | `parallel-test-shards` | Name of the shards artifact              |
 | `token`                            | (github.token)         | GitHub token                             |
+
+If a single workflow contains the different types of tests,
+you need to explicitly set the `shards-artifact-name` to avoid the conflict.
 
 ### Outputs
 
