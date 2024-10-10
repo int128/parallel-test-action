@@ -74,34 +74,79 @@ jobs:
 
 ## How it works
 
+### Overview
+
+Here is the inputs and outputs of this action:
+
+- Test Files (input)
+  - This action finds the test files specified by a glob pattern (e.g. `tests/**/*.test.ts`).
+- Last Test Reports (input)
+  - This action finds the last success workflow run of the specified branch, and downloads the test reports.
+  - A test report should contain the duration of each test case.
+- Shard Files (output)
+  - This action generates the shard files based on the estimated time of each test file.
+  - A shard file contains the list of test files.
+  - Each job should run the tests in the corresponding shard file. For example, job #1 runs the tests in shard #1.
+
+Here is the flow of this action:
+
+```mermaid
+graph TB
+  LTR[Last Test Reports] --> A
+  subgraph Test Job #1
+    A[parallel-test-action]
+    WT1[Test Files in the working directory] --> A
+    subgraph SF[Shard Files]
+      S1[Shard #1]
+      S2[Shard #2]
+      S3[Shard #N]
+    end
+    A --> SF
+    S1 --> T[Testing Framework] --> TR[Test Report #i]
+  end
+```
+
 ### Test files distribution
 
 You need to upload the test reports as artifacts on the default branch.
 It is required to estimate the time of each test file.
 
-This action generates the shard files by the following steps:
+This action distibutes the test files based on the estimated time using the greedy algorithm.
+Here is the example of the distribution:
 
-1. Find the test files of the given glob pattern (e.g. `tests/**/*.test.ts`) in the working directory.
-2. Download the test reports from the last workflow run of specified branch (e.g. main branch).
-3. Calculate the estimated time of each test file.
-4. Distribute the test files to the shards based on the estimated time.
-5. Write the shard files.
+```mermaid
+graph TB
+  subgraph Test Files
+    TF1[Test File #1]
+    TF2[Test File #2]
+    TF3[Test File #3]
+    TF4[Test File #4]
+    TF5[Test File #5]
+  end
+  subgraph Shard Files
+    S1[Shard #1]
+    S2[Shard #2]
+    S3[Shard #3]
+  end
+  TF1 --> S1
+  TF2 --> S1
+  TF3 --> S2
+  TF4 --> S3
+  TF5 --> S3
+```
+
+Each shard should contain the test files with the similar estimated time.
 
 If a test file is not found in the test reports, this action assumes the average time of all test files.
 If no test report is given, this action falls back to the round-robin distribution.
 
-For now, this action adopts the greedy algorithm to distribute the test files.
-
-### Parallel jobs and lock
+### Lock for parallel jobs in a workflow
 
 When this action is run in parallel jobs, each job may generate the different shard files.
 To avoid the race condition, this action acquires the lock by uploading the shards artifact.
 
 1. The first job acquires the lock by uploading the shards artifact.
-2. The other jobs download the shards artifact and use it. Their generated shard files are discarded.
-
-If your workflow contains the different test jobs,
-you need to explicitly set the `shards-artifact-name` to avoid the conflict.
+2. The other jobs will download the shards artifact and use it. Their generated shards will be discarded.
 
 ## Specification
 
@@ -116,6 +161,9 @@ you need to explicitly set the `shards-artifact-name` to avoid the conflict.
 | `shard-count`                      | (required)             | Number of shards                         |
 | `shards-artifact-name`             | `parallel-test-shards` | Name of the shards artifact              |
 | `token`                            | (github.token)         | GitHub token                             |
+
+If a single workflow contains the different types of tests,
+you need to explicitly set the `shards-artifact-name` to avoid the conflict.
 
 ### Outputs
 
