@@ -148,6 +148,26 @@ To avoid the race condition, this action acquires the lock by uploading the shar
 1. The first job acquires the lock by uploading the shards artifact.
 2. The other jobs will download the shards artifact and use it. Their generated shards will be discarded.
 
+```mermaid
+graph TB
+  LTR[Last Test Report] --Download--> A1
+  subgraph Workflow
+    subgraph Artifact
+      S[Shards]
+    end
+    subgraph J1[Job #1]
+      A1[parallel-test-action] --> T1[Testing Framework]
+      A1 --Upload--> S
+    end
+    subgraph J2[Job #2]
+      S --Download--> A2[parallel-test-action] --> T2[Testing Framework]
+    end
+    subgraph J3[Job #3]
+      S --Download--> A3[parallel-test-action] --> T3[Testing Framework]
+    end
+  end
+```
+
 ## Specification
 
 ### Inputs
