@@ -6,7 +6,12 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { tryDownloadShardsIfAlreadyExists, distributeTestFilesToShards, writeShardsWithLock } from './shard'
+import {
+  tryDownloadShardsIfAlreadyExists,
+  distributeTestFilesToShards,
+  writeShardsWithLock,
+  verifyShards,
+} from './shard'
 import { writeSummary } from './summary'
 
 type Inputs = {
@@ -37,7 +42,12 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   // Since multiple jobs run in parallel, another job may have already uploaded the shards.
   if (await tryDownloadShardsIfAlreadyExists(shardsDirectory, inputs.shardsArtifactName)) {
-    await showListofShardFiles(shardsDirectory)
+    const shardFiles = await globShardFiles(shardsDirectory)
+    core.info(`Available ${shardFiles.length} shard files:`)
+    for (const f of shardFiles) {
+      core.info(`- ${f}`)
+    }
+    await verifyShards(workingTestFilenames, shardFiles)
     return { shardsDirectory }
   }
 
@@ -63,17 +73,18 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     writeSummary(shardSet, testReportSet)
   }
 
-  await showListofShardFiles(shardsDirectory)
+  const shardFiles = await globShardFiles(shardsDirectory)
+  core.info(`Available ${shardFiles.length} shard files:`)
+  for (const f of shardFiles) {
+    core.info(`- ${f}`)
+  }
+  await verifyShards(workingTestFilenames, shardFiles)
   return { shardsDirectory }
 }
 
-const showListofShardFiles = async (shardsDirectory: string) => {
+const globShardFiles = async (shardsDirectory: string) => {
   const globber = await glob.create(path.join(shardsDirectory, '*'))
-  const files = await globber.glob()
-  core.info(`Available ${files.length} shard files:`)
-  for (const f of files) {
-    core.info(`- ${f}`)
-  }
+  return await globber.glob()
 }
 
 const globRelative = async (pattern: string) => {
