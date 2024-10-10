@@ -204,18 +204,20 @@ const writeShards = async (shards: Shard[], directory: string): Promise<string[]
   return shardFilenames
 }
 
-export const verifyShards = async (workingTestFiles: string[], shardFiles: string[]): Promise<void> => {
+type VerifyResult = {
+  shardedTestFiles: string[]
+  missingTestFiles: string[]
+}
+
+export const verifyTestFiles = async (workingTestFiles: string[], shardFiles: string[]): Promise<VerifyResult> => {
   const shardedTestFileSet = await readShards(shardFiles)
   const missingTestFiles = new Set(workingTestFiles)
   for (const f of shardedTestFileSet) {
     missingTestFiles.delete(f)
   }
-  if (missingTestFiles.size > 0) {
-    throw new Error(
-      `Missing test files in the shards. This may be a bug. Please open an issue from https://github.com/int128/parallel-test-action.\n` +
-        `The test files in the working directory but not in the shards:\n` +
-        `${[...missingTestFiles].join('\n')}`,
-    )
+  return {
+    shardedTestFiles: [...shardedTestFileSet],
+    missingTestFiles: [...missingTestFiles],
   }
 }
 

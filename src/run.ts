@@ -10,7 +10,7 @@ import {
   tryDownloadShardsIfAlreadyExists,
   distributeTestFilesToShards,
   writeShardsWithLock,
-  verifyShards,
+  verifyTestFiles,
 } from './shard'
 import { writeSummary } from './summary'
 
@@ -42,12 +42,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   // Since multiple jobs run in parallel, another job may have already uploaded the shards.
   if (await tryDownloadShardsIfAlreadyExists(shardsDirectory, inputs.shardsArtifactName)) {
-    const shardFiles = await globShardFiles(shardsDirectory)
-    core.info(`Available ${shardFiles.length} shard files:`)
-    for (const f of shardFiles) {
-      core.info(`- ${f}`)
-    }
-    await verifyShards(workingTestFilenames, shardFiles)
+    await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
     return { shardsDirectory }
   }
 
@@ -73,13 +68,27 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     writeSummary(shardSet, testReportSet)
   }
 
+  await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
+  return { shardsDirectory }
+}
+
+const ensureTestFilesConsistency = async (shardsDirectory: string, workingTestFilenames: string[]) => {
   const shardFiles = await globShardFiles(shardsDirectory)
   core.info(`Available ${shardFiles.length} shard files:`)
   for (const f of shardFiles) {
     core.info(`- ${f}`)
   }
-  await verifyShards(workingTestFilenames, shardFiles)
-  return { shardsDirectory }
+  const verifyResult = await verifyTestFiles(workingTestFilenames, shardFiles)
+  core.info(`Test files in the working directory: ${workingTestFilenames.length}`)
+  core.info(`Test files in the shards: ${verifyResult.shardedTestFiles.length}`)
+  core.info(`Missing test files: ${verifyResult.missingTestFiles.length}`)
+  if (verifyResult.missingTestFiles.length > 0) {
+    throw new Error(
+      `Missing test files in the shards. This may be a bug. Please open an issue from https://github.com/int128/parallel-test-action.\n` +
+        `The test files in the working directory but not in the shards:\n` +
+        `${verifyResult.missingTestFiles.join('\n')}`,
+    )
+  }
 }
 
 const globShardFiles = async (shardsDirectory: string) => {
