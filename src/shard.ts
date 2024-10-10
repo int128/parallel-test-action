@@ -205,18 +205,7 @@ const writeShards = async (shards: Shard[], directory: string): Promise<string[]
 }
 
 export const verifyShards = async (workingTestFiles: string[], shardFiles: string[]): Promise<void> => {
-  const shardedTestFileSet = new Set<string>()
-  for (const f of shardFiles) {
-    const b = await fs.readFile(f)
-    const testFiles = b
-      .toString()
-      .split('\n')
-      .filter((x) => x)
-    for (const testFile of testFiles) {
-      shardedTestFileSet.add(testFile)
-    }
-  }
-
+  const shardedTestFileSet = await readShards(shardFiles)
   const missingTestFiles = new Set(workingTestFiles)
   for (const f of shardedTestFileSet) {
     missingTestFiles.delete(f)
@@ -228,4 +217,19 @@ export const verifyShards = async (workingTestFiles: string[], shardFiles: strin
         `${[...missingTestFiles].join('\n')}`,
     )
   }
+}
+
+const readShards = async (shardFiles: string[]): Promise<Set<string>> => {
+  const shardedTestFileSet = new Set<string>()
+  for (const f of shardFiles) {
+    const b = await fs.readFile(f)
+    const testFiles = b
+      .toString()
+      .split('\n')
+      .filter((x) => x)
+    for (const testFile of testFiles) {
+      shardedTestFileSet.add(testFile)
+    }
+  }
+  return shardedTestFileSet
 }
