@@ -89,6 +89,7 @@ const ensureTestFilesConsistency = async (shardsDirectory: string, workingTestFi
         `${verifyResult.missingTestFiles.join('\n')}`,
     )
   }
+  core.info(`Verified the consistency of the test files`)
 }
 
 const globShardFiles = async (shardsDirectory: string) => {
