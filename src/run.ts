@@ -6,7 +6,12 @@ import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadLastTestReports } from './artifact'
 import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
-import { tryDownloadShardsIfAlreadyExists, distributeTestFilesToShards, writeShardsWithLock } from './shard'
+import {
+  tryDownloadShardsIfAlreadyExists,
+  distributeTestFilesToShards,
+  writeShardsWithLock,
+  verifyTestFiles,
+} from './shard'
 import { writeSummary } from './summary'
 
 type Inputs = {
@@ -37,7 +42,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
 
   // Since multiple jobs run in parallel, another job may have already uploaded the shards.
   if (await tryDownloadShardsIfAlreadyExists(shardsDirectory, inputs.shardsArtifactName)) {
-    await showListofShardFiles(shardsDirectory)
+    await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
     return { shardsDirectory }
   }
 
@@ -63,17 +68,33 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     writeSummary(shardSet, testReportSet)
   }
 
-  await showListofShardFiles(shardsDirectory)
+  await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
   return { shardsDirectory }
 }
 
-const showListofShardFiles = async (shardsDirectory: string) => {
-  const globber = await glob.create(path.join(shardsDirectory, '*'))
-  const files = await globber.glob()
-  core.info(`Available ${files.length} shard files:`)
-  for (const f of files) {
+const ensureTestFilesConsistency = async (shardsDirectory: string, workingTestFilenames: string[]) => {
+  const shardFiles = await globShardFiles(shardsDirectory)
+  core.info(`Available ${shardFiles.length} shard files:`)
+  for (const f of shardFiles) {
     core.info(`- ${f}`)
   }
+  const verifyResult = await verifyTestFiles(workingTestFilenames, shardFiles)
+  core.info(`Test files in the working directory: ${workingTestFilenames.length}`)
+  core.info(`Test files in the shards: ${verifyResult.shardedTestFiles.length}`)
+  core.info(`Missing test files: ${verifyResult.missingTestFiles.length}`)
+  if (verifyResult.missingTestFiles.length > 0) {
+    throw new Error(
+      `Missing test files in the shards. This may be a bug. Please open an issue from https://github.com/int128/parallel-test-action.\n` +
+        `The test files in the working directory but not in the shards:\n` +
+        `${verifyResult.missingTestFiles.join('\n')}`,
+    )
+  }
+  core.info(`Verified the consistency of the test files`)
+}
+
+const globShardFiles = async (shardsDirectory: string) => {
+  const globber = await glob.create(path.join(shardsDirectory, '*'))
+  return await globber.glob()
 }
 
 const globRelative = async (pattern: string) => {
