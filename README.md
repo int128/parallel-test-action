@@ -108,9 +108,6 @@ graph TB
 
 ### Test files distribution
 
-You need to upload the test reports as artifacts on the default branch.
-It is required to estimate the time of each test file.
-
 This action distibutes the test files based on the estimated time using the greedy algorithm.
 Here is the example of the distribution:
 
@@ -137,6 +134,9 @@ graph TB
 
 Each shard should contain the test files with the similar estimated time.
 
+You need to upload the test reports as artifacts on the default branch.
+It is required to estimate the time of each test file.
+
 If a test file is not found in the test reports, this action assumes the average time of all test files.
 If no test report is given, this action falls back to the round-robin distribution.
 
@@ -147,6 +147,28 @@ To avoid the race condition, this action acquires the lock by uploading the shar
 
 1. The first job acquires the lock by uploading the shards artifact.
 2. The other jobs will download the shards artifact and use it. Their generated shards will be discarded.
+
+Here is the flow of the parallel jobs:
+
+```mermaid
+graph TB
+  LTR[Last Test Report] --Download--> A1
+  subgraph Workflow
+    subgraph Artifact
+      S[Shards]
+    end
+    subgraph J1[Job #1]
+      A1[parallel-test-action] --> T1[Testing Framework]
+      A1 --Upload--> S
+    end
+    subgraph J2[Job #2]
+      S --Download--> A2[parallel-test-action] --> T2[Testing Framework]
+    end
+    subgraph J3[Job #3]
+      S --Download--> A3[parallel-test-action] --> T3[Testing Framework]
+    end
+  end
+```
 
 ## Specification
 
