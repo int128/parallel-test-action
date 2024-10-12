@@ -1,6 +1,7 @@
 # parallel-test-action [![ts](https://github.com/int128/parallel-test-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/parallel-test-action/actions/workflows/ts.yaml)
 
 This action distributes the test files to the shards based on the estimated time from the test reports.
+If you have a lot of tests, you can reduce the time by running the parallel test jobs.
 
 ## Getting Started
 
@@ -9,12 +10,6 @@ Here are example workflows to run tests in parallel.
 ### Jest
 
 ```yaml
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-
 jobs:
   test:
     strategy:
@@ -35,8 +30,7 @@ jobs:
       - run: xargs pnpm run test -- < "$SHARD_FILE"
         env:
           SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
-      - if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: test-report-${{ matrix.shard-id }}
           path: junit.xml
@@ -65,8 +59,7 @@ jobs:
       - run: xargs bundle exec rspec --format RspecJunitFormatter --out rspec.xml < "$SHARD_FILE"
         env:
           SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
-      - if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: test-report-${{ matrix.shard-id }}
           path: rspec.xml
@@ -74,41 +67,11 @@ jobs:
 
 ## How it works
 
-### Overview
-
-Here is the inputs and outputs of this action:
-
-- Test Files (input)
-  - This action finds the test files specified by a glob pattern (e.g. `tests/**/*.test.ts`).
-- Last Test Reports (input)
-  - This action finds the last success workflow run of the specified branch, and downloads the test reports.
-  - A test report should contain the duration of each test case.
-- Shard Files (output)
-  - This action generates the shard files based on the estimated time of each test file.
-  - A shard file contains the list of test files.
-  - Each job should run the tests in the corresponding shard file. For example, job #1 runs the tests in shard #1.
-
-Here is the flow of this action:
-
-```mermaid
-graph TB
-  LTR[Last Test Reports] --> A
-  subgraph Test Job #1
-    A[parallel-test-action]
-    WT1[Test Files in the working directory] --> A
-    subgraph SF[Shard Files]
-      S1[Shard #1]
-      S2[Shard #2]
-      S3[Shard #N]
-    end
-    A --> SF
-    S1 --> T[Testing Framework] --> TR[Test Report #i]
-  end
-```
-
 ### Test files distribution
 
-This action distibutes the test files based on the estimated time using the greedy algorithm.
+This action distibutes the test files to the shards based on the estimated time.
+It uses the greedy algorithm.
+
 Here is the example of the distribution:
 
 ```mermaid
@@ -136,37 +99,75 @@ Each shard should contain the test files with the similar estimated time.
 
 You need to upload the test reports as artifacts on the default branch.
 It is required to estimate the time of each test file.
-
 If a test file is not found in the test reports, this action assumes the average time of all test files.
 If no test report is given, this action falls back to the round-robin distribution.
 
-### Lock for parallel jobs in a workflow
+### Action overview
+
+Here is the inputs and outputs of this action:
+
+- Test Files (input)
+  - This action finds the test files specified by a glob pattern (e.g. `tests/**/*.test.ts`).
+- Test Reports (input)
+  - This action finds the last success workflow run of the specified branch, and downloads the test reports.
+  - A test report should contain the duration of each test case.
+- Shard Files (output)
+  - This action generates the shard files based on the estimated time of each test file.
+  - A shard file contains the list of test files.
+  - Each job should run the tests in the corresponding shard file. For example, job #1 runs the tests in shard #1.
+
+Here is the flow of test job:
+
+```mermaid
+graph TB
+  LTR[Test Report #1...#N of last workflow run] --> A
+  subgraph Test Job #1
+    A[parallel-test-action]
+    WT1[Test Files in the working directory] --> A
+    subgraph SF[Shard Files]
+      S1[Shard #1]
+      S2[Shard #2]
+      S3[Shard #N]
+    end
+    A --> SF
+    S1 --> T[Testing Framework] --> TR[Test Report #1]
+  end
+```
+
+### Workflow overview
+
+The test workflow runs the test jobs in parallel.
+Each job should process the corresponding shard.
 
 When this action is run in parallel jobs, each job may generate the different shard files.
 To avoid the race condition, this action acquires the lock by uploading the shards artifact.
 
 1. The first job acquires the lock by uploading the shards artifact.
-2. The other jobs will download the shards artifact and use it. Their generated shards will be discarded.
+2. The other jobs will download the shards artifact and use it. It will discard their generated shards.
 
-Here is the flow of the parallel jobs:
+Here is the structure of test workflow:
 
 ```mermaid
 graph TB
-  LTR[Last Test Report] --Download--> A1
-  subgraph Workflow
+  subgraph Current workflow run
     subgraph Artifact
       S[Shards]
     end
-    subgraph J1[Job #1]
+    subgraph J3[Test Job #N]
+      S --Download--> A3[parallel-test-action] --> T3[Testing Framework]
+    end
+    subgraph J2[Test Job #2]
+      S --Download--> A2[parallel-test-action] --> T2[Testing Framework]
+    end
+    subgraph J1[Test Job #1]
       A1[parallel-test-action] --> T1[Testing Framework]
       A1 --Upload--> S
     end
-    subgraph J2[Job #2]
-      S --Download--> A2[parallel-test-action] --> T2[Testing Framework]
-    end
-    subgraph J3[Job #3]
-      S --Download--> A3[parallel-test-action] --> T3[Testing Framework]
-    end
+  end
+  subgraph Last workflow run
+    LTR1[Test Report #1] --Download--> A1
+    LTR2[Test Report #2] --Download--> A1
+    LTR3[Test Report #N] --Download--> A1
   end
 ```
 
