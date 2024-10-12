@@ -5,9 +5,9 @@ If you have a lot of tests, you can reduce the time by running the parallel test
 
 ## Getting Started
 
-Here are example workflows to run tests in parallel.
-
 ### Jest
+
+Here is an example workflow for Jest.
 
 ```yaml
 jobs:
@@ -36,7 +36,13 @@ jobs:
           path: junit.xml
 ```
 
+You can generate a test report using [jest-junit](https://github.com/jest-community/jest-junit).
+This action requires `file` attribute of the test report.
+See [jest.config.js](jest.config.js) for example.
+
 ### RSpec
+
+Here is an example workflow for RSpec.
 
 ```yaml
 jobs:
@@ -64,6 +70,8 @@ jobs:
           name: test-report-${{ matrix.shard-id }}
           path: rspec.xml
 ```
+
+You can generate a test report using [rspec_junit_formatter](https://github.com/sj26/rspec_junit_formatter).
 
 ## How it works
 
@@ -120,17 +128,16 @@ Here is the flow of test job:
 
 ```mermaid
 graph TB
-  LTR[Test Report #1...#N of last workflow run] --> A
+  LTR[Test Report #1...#N of the last workflow run] --> A
   subgraph Test Job #1
     A[parallel-test-action]
     WT1[Test Files in the working directory] --> A
     subgraph SF[Shard Files]
       S1[Shard #1]
-      S2[Shard #2]
-      S3[Shard #N]
+      S3[Shard ... #N]
     end
     A --> SF
-    S1 --> T[Testing Framework] --> TR[Test Report #1]
+    S1 --> T[Testing Framework]
   end
 ```
 
@@ -140,34 +147,34 @@ The test workflow runs the test jobs in parallel.
 Each job should process the corresponding shard.
 
 When this action is run in parallel jobs, each job may generate the different shard files.
-To avoid the race condition, this action acquires the lock by uploading the shards artifact.
+To avoid the race condition, this action acquires the lock as follows:
 
-1. The first job acquires the lock by uploading the shards artifact.
-2. The other jobs will download the shards artifact and use it. It will discard their generated shards.
+1. The first job uploads the shards as an artifact.
+   This operation is atomic since GitHub Actions Artifact rejects the same name of artifact.
+2. The subsequent jobs download the shards artifact and use it.
+   They discard their generated shards.
 
 Here is the structure of test workflow:
 
 ```mermaid
 graph TB
+  subgraph Future workflow run
+    N[parallel-test-action]
+  end
+  TR1 -.-> N
+  TR2 -.-> N
   subgraph Current workflow run
-    subgraph Artifact
-      S[Shards]
+    A1 --Upload--> S[Shards] --Download--> A2
+    subgraph J2[Subsequent Job #j]
+      A2[parallel-test-action] --> T2[Testing Framework] --> TR2[Test Report #j]
     end
-    subgraph J3[Test Job #N]
-      S --Download--> A3[parallel-test-action] --> T3[Testing Framework]
-    end
-    subgraph J2[Test Job #2]
-      S --Download--> A2[parallel-test-action] --> T2[Testing Framework]
-    end
-    subgraph J1[Test Job #1]
-      A1[parallel-test-action] --> T1[Testing Framework]
-      A1 --Upload--> S
+    subgraph J1[First Job #i]
+      A1[parallel-test-action] --> T1[Testing Framework] --> TR1[Test Report #i]
     end
   end
   subgraph Last workflow run
     LTR1[Test Report #1] --Download--> A1
-    LTR2[Test Report #2] --Download--> A1
-    LTR3[Test Report #N] --Download--> A1
+    LTR2[Test Report ... #N] --Download--> A1
   end
 ```
 
