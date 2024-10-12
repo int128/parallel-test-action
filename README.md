@@ -150,7 +150,7 @@ When this action is run in parallel jobs, each job may generate the different sh
 To avoid the race condition, this action acquires the lock as follows:
 
 1. The first job uploads the shards as an artifact.
-   This operation is atomic since GitHub Actions Artifact rejects the same named artifact.
+   This operation is atomic since GitHub Actions Artifact rejects the same name of artifact.
 2. The subsequent jobs download the shards artifact and use it.
    They discard their generated shards.
 
