@@ -12,6 +12,7 @@ export default {
       // https://github.com/jest-community/jest-junit
       'jest-junit',
       {
+        // parallel-test-action requires the file attribute
         addFileAttribute: 'true',
       },
     ],
