@@ -5,9 +5,59 @@ If you have a lot of tests, you can reduce the time by running the parallel test
 
 ## Getting Started
 
+Here is the typical workflow to run the parallel test jobs.
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        shard-id: [1, 2, 3] # Shard ID starts from #1
+    runs-on: ubuntu-latest
+    steps:
+      # (1) Checkout the repository.
+      - uses: actions/checkout@v4
+
+      # (2) Distribute the test files to the shards.
+      - uses: int128/parallel-test-action@v1
+        id: parallel-test
+        with:
+          test-files: '**/*' # Glob pattern of your test files
+          test-report-artifact-name-prefix: test-report- # Find the test reports of this name
+          test-report-branch: main # Find the test reports from the main branch
+          shard-count: 3
+
+      # (3) Run your testing framework.
+      - run: xargs your-testing-framework < "$SHARD_FILE"
+        env:
+          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
+
+      # (4) Upload the test report as an artifact.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.shard-id }}
+          path: junit.xml
+```
+
+1. Checkout the repository.
+   This action depends on the working directory to generate the list of test files.
+2. Distribute the test files to the shards.
+   It generates the list of test files for each shard.
+3. Run your testing framework.
+   It should accept the list of test files to run.
+   It should also generate the test report.
+4. Upload the test report as an artifact.
+   The artifact will be used in the future workflow runs.
+
 ### Jest
 
-Here is an example workflow for Jest.
+Here is an example workflow to run Jest in parallel.
 
 ```yaml
 jobs:
@@ -42,7 +92,7 @@ See [jest.config.js](jest.config.js) for example.
 
 ### RSpec
 
-Here is an example workflow for RSpec.
+Here is an example workflow to run RSpec in parallel.
 
 ```yaml
 jobs:
