@@ -12,7 +12,7 @@ type TestFile = {
 
 export const parseTestReportFiles = async (testReportFiles: string[]): Promise<TestFile[]> => {
   const junitXmls = await parseTestReportFilesToJunitXml(testReportFiles)
-  const allTestCases = []
+  const allTestCases: TestCase[] = []
   for (const junitXml of junitXmls) {
     const testCases = findTestCasesFromJunitXml(junitXml)
     allTestCases.push(...testCases)
@@ -23,7 +23,7 @@ export const parseTestReportFiles = async (testReportFiles: string[]): Promise<T
 }
 
 const parseTestReportFilesToJunitXml = async (testReportFiles: string[]): Promise<JunitXml[]> => {
-  const junitXmls = []
+  const junitXmls: JunitXml[] = []
   core.startGroup(`Parsing ${testReportFiles.length} test report files`)
   for (const testReportFile of testReportFiles) {
     core.info(`Parsing the test report: ${testReportFile}`)
