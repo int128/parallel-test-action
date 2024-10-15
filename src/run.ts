@@ -4,8 +4,8 @@ import * as glob from '@actions/glob'
 import * as os from 'os'
 import * as path from 'path'
 import { getOctokit } from './github'
-import { downloadLastTestReports } from './artifact'
-import { findTestCasesFromTestReportFiles, groupTestCasesByTestFile } from './junitxml'
+import { downloadTestReportsFromLastWorkflowRuns } from './artifact'
+import { parseTestReportFiles } from './junitxml'
 import {
   tryDownloadShardsIfAlreadyExists,
   distributeTestFilesToShards,
@@ -47,25 +47,23 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
-  const testReportSet = await downloadLastTestReports(octokit, {
+  const testWorkflowRun = await downloadTestReportsFromLastWorkflowRuns(octokit, {
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
     testReportBranch: inputs.testReportBranch,
-    testReportWorkflow: inputs.workflowFilename,
+    testReportWorkflowFilename: inputs.workflowFilename,
     testReportDirectory,
     owner: inputs.owner,
     repo: inputs.repo,
     token: inputs.token,
   })
+  const testFiles = await parseTestReportFiles(testWorkflowRun?.testReportFiles ?? [])
 
-  const allTestCases = await findTestCasesFromTestReportFiles(testReportSet.testReportFiles)
-  core.info(`Found ${allTestCases.length} test cases in the test reports`)
-  const testFiles = groupTestCasesByTestFile(allTestCases)
   const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)
 
   const shardsLock = await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
   if (shardsLock.currentJobAcquiredLock) {
-    writeSummary(shardSet, testReportSet)
+    writeSummary(shardSet, testWorkflowRun)
   }
 
   await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
