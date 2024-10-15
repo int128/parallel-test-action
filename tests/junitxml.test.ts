@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import { findTestCases, groupTestCasesByTestFile, parseJunitXml, TestCase } from '../src/junitxml'
+import { findTestCasesFromJunitXml, groupTestCasesByTestFile, parseJunitXml, TestCase } from '../src/junitxml'
 
 describe('parseJunitXml', () => {
   it('should parse fixture.xml', async () => {
@@ -9,7 +9,7 @@ describe('parseJunitXml', () => {
   })
 })
 
-describe('findTestCases', () => {
+describe('findTestCasesFromJunitXml', () => {
   it('should return test cases', () => {
     const junitXml = {
       testsuite: [
@@ -28,7 +28,7 @@ describe('findTestCases', () => {
         },
       ],
     }
-    expect(findTestCases(junitXml)).toEqual<TestCase[]>([
+    expect(findTestCasesFromJunitXml(junitXml)).toEqual<TestCase[]>([
       { '@_name': 'test1', '@_time': 1, '@_file': 'file1' },
       { '@_name': 'test2', '@_time': 2, '@_file': 'file2' },
       { '@_name': 'test3', '@_time': 3, '@_file': 'file1' },
