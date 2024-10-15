@@ -56,7 +56,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     repo: inputs.repo,
     token: inputs.token,
   })
-  const testFiles = await parseTestReportFiles(testWorkflowRun.testReportFiles)
+  const testFiles = await parseTestReportFiles(testWorkflowRun?.testReportFiles ?? [])
 
   const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)

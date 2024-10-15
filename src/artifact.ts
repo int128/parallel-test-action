@@ -19,10 +19,15 @@ export type TestWorkflowRun = {
   testReportFiles: string[]
 }
 
-export const downloadLastTestReports = async (octokit: Octokit, inputs: Inputs): Promise<TestWorkflowRun> => {
+export const downloadLastTestReports = async (
+  octokit: Octokit,
+  inputs: Inputs,
+): Promise<TestWorkflowRun | undefined> => {
   const lastWorkflowRuns = await findLastWorkflowRuns(octokit, inputs)
+  if (lastWorkflowRuns.length === 0) {
+    return
+  }
   const lastWorkflowRun = lastWorkflowRuns[0]
-
   const artifactClient = new DefaultArtifactClient()
   const testReportFiles = await downloadTestReportArtifacts(octokit, artifactClient, inputs, lastWorkflowRun.id)
   return {
