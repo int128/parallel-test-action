@@ -19,7 +19,7 @@ export type TestWorkflowRun = {
   testReportFiles: string[]
 }
 
-export const downloadLastTestReports = async (
+export const downloadTestReportsFromLastWorkflowRuns = async (
   octokit: Octokit,
   inputs: Inputs,
 ): Promise<TestWorkflowRun | undefined> => {

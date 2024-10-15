@@ -4,7 +4,7 @@ import * as glob from '@actions/glob'
 import * as os from 'os'
 import * as path from 'path'
 import { getOctokit } from './github'
-import { downloadLastTestReports } from './artifact'
+import { downloadTestReportsFromLastWorkflowRuns } from './artifact'
 import { parseTestReportFiles } from './junitxml'
 import {
   tryDownloadShardsIfAlreadyExists,
@@ -47,7 +47,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
-  const testWorkflowRun = await downloadLastTestReports(octokit, {
+  const testWorkflowRun = await downloadTestReportsFromLastWorkflowRuns(octokit, {
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
     testReportBranch: inputs.testReportBranch,
     testReportWorkflowFilename: inputs.workflowFilename,
