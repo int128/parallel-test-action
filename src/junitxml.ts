@@ -12,12 +12,13 @@ type TestFile = {
 
 export const parseTestReportFiles = async (testReportFiles: string[]): Promise<TestFile[]> => {
   const junitXmls = await parseTestReportFilesToJunitXml(testReportFiles)
-  const testCases = []
+  const allTestCases = []
   for (const junitXml of junitXmls) {
-    testCases.push(...findTestCasesFromJunitXml(junitXml))
+    const testCases = findTestCasesFromJunitXml(junitXml)
+    allTestCases.push(...testCases)
   }
-  core.info(`Found ${testCases.length} test cases in the test reports`)
-  const testFiles = groupTestCasesByTestFile(testCases)
+  core.info(`Found ${allTestCases.length} test cases in the test reports`)
+  const testFiles = groupTestCasesByTestFile(allTestCases)
   return testFiles
 }
 
