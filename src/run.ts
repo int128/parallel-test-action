@@ -19,6 +19,7 @@ type Inputs = {
   testFiles: string
   testReportArtifactNamePrefix: string
   testReportBranch: string
+  testReportWorkflowCount: number
   shardCount: number
   shardsArtifactName: string
   owner: string
@@ -49,7 +50,7 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
   const testWorkflowRuns = await downloadTestReportsFromLastWorkflowRuns(octokit, {
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
-    testReportWorkflowCount: 3,
+    testReportWorkflowCount: inputs.testReportWorkflowCount,
     testReportBranch: inputs.testReportBranch,
     testReportWorkflowFilename: inputs.workflowFilename,
     testReportDirectory,
