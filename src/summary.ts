@@ -53,8 +53,8 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRuns: TestWorkflowR
   core.summary.addHeading('Test reports', 2)
   if (testWorkflowRuns.length > 0) {
     core.summary.addRaw('This action downloaded the test reports from:')
-    for (const testWorkflowRun of testWorkflowRuns) {
-      core.summary.addHeading(`Workflow Run`, 3)
+    for (const [index, testWorkflowRun] of testWorkflowRuns.entries()) {
+      core.summary.addHeading(`Workflow Run #${index + 1}`, 3)
       core.summary.addLink(testWorkflowRun.url, testWorkflowRun.url)
       core.summary.addHeading(`Files`, 4)
       core.summary.addList(testWorkflowRun.testReportFiles)
