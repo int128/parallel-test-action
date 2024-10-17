@@ -5,7 +5,7 @@ import * as os from 'os'
 import * as path from 'path'
 import { getOctokit } from './github'
 import { downloadTestReportsFromLastWorkflowRuns } from './artifact'
-import { parseTestReportFiles } from './junitxml'
+import { parseTestReportsOfWorkflowRuns } from './testreport'
 import {
   tryDownloadShardsIfAlreadyExists,
   distributeTestFilesToShards,
@@ -19,6 +19,7 @@ type Inputs = {
   testFiles: string
   testReportArtifactNamePrefix: string
   testReportBranch: string
+  testReportWorkflowCount: number
   shardCount: number
   shardsArtifactName: string
   owner: string
@@ -47,8 +48,9 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
   }
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
-  const testWorkflowRun = await downloadTestReportsFromLastWorkflowRuns(octokit, {
+  const testWorkflowRuns = await downloadTestReportsFromLastWorkflowRuns(octokit, {
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
+    testReportWorkflowCount: inputs.testReportWorkflowCount,
     testReportBranch: inputs.testReportBranch,
     testReportWorkflowFilename: inputs.workflowFilename,
     testReportDirectory,
@@ -56,14 +58,14 @@ export const run = async (inputs: Inputs): Promise<Outputs> => {
     repo: inputs.repo,
     token: inputs.token,
   })
-  const testFiles = await parseTestReportFiles(testWorkflowRun?.testReportFiles ?? [])
+  const testFiles = await parseTestReportsOfWorkflowRuns(testWorkflowRuns)
 
   const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)
 
   const shardsLock = await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
   if (shardsLock.currentJobAcquiredLock) {
-    writeSummary(shardSet, testWorkflowRun)
+    writeSummary(shardSet, testWorkflowRuns)
   }
 
   await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
