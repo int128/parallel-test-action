@@ -1,6 +1,6 @@
 import { parseTestReportFiles } from './junitxml'
 
-type TestWorkflowRun = {
+type TestReportsOfWorkflowRun = {
   testReportFiles: string[]
 }
 
@@ -10,10 +10,12 @@ type TestFile = {
   totalTestCases: number
 }
 
-export const parseTestReportsOfWorkflowRuns = async (testWorkflowRuns: TestWorkflowRun[]): Promise<TestFile[]> => {
+export const parseTestReportsOfWorkflowRuns = async (
+  testReportsOfWorkflowRuns: TestReportsOfWorkflowRun[],
+): Promise<TestFile[]> => {
   const testFilesOfWorkflowRuns: TestFile[][] = []
-  for (const testWorkflowRun of testWorkflowRuns) {
-    const testFiles = await parseTestReportFiles(testWorkflowRun.testReportFiles)
+  for (const testReportsOfWorkflowRun of testReportsOfWorkflowRuns) {
+    const testFiles = await parseTestReportFiles(testReportsOfWorkflowRun.testReportFiles)
     testFilesOfWorkflowRuns.push(testFiles)
   }
   return calculateAveregedTestFiles(testFilesOfWorkflowRuns)
