@@ -22,11 +22,23 @@ graph TB
     S2[Shard #2]
     S3[Shard #3]
   end
+  subgraph J3[Job #3]
+    T3[Testing Framework]
+  end
+  subgraph J2[Job #2]
+    T2[Testing Framework]
+  end
+  subgraph J1[Job #1]
+    T1[Testing Framework]
+  end
   TF1 --> S1
   TF2 --> S1
   TF3 --> S2
   TF4 --> S3
   TF5 --> S3
+  S1 --> T1
+  S2 --> T2
+  S3 --> T3
 ```
 
 Each shard should contain the test files with the similar estimated time.
@@ -128,7 +140,7 @@ Here is the flow of test job:
 ```mermaid
 graph TB
   LTR[Test Report #1...#N of the last workflow run] --> A
-  subgraph Test Job #1
+  subgraph Job #1
     A[parallel-test-action]
     WT1[Test Files in the working directory] --> A
     subgraph SF[Shard Files]
