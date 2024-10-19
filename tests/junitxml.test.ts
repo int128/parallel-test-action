@@ -1,6 +1,24 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import { findTestCasesFromJunitXml, groupTestCasesByTestFile, parseJunitXml, TestCase } from '../src/junitxml'
+import {
+  findTestCasesFromJunitXml,
+  groupTestCasesByTestFile,
+  parseJunitXml,
+  parseTestReportFiles,
+  TestCase,
+} from '../src/junitxml'
+
+describe('parseTestReportFiles', () => {
+  it('should parse rspec.xml', async () => {
+    const testReportFiles = [path.join(__dirname, 'fixtures/rspec1.xml'), path.join(__dirname, 'fixtures/rspec2.xml')]
+    const testFiles = await parseTestReportFiles(testReportFiles)
+    expect(testFiles).toEqual([
+      { filename: 'spec/a_spec.rb', totalTime: 3, totalTestCases: 2 },
+      { filename: 'spec/b_spec.rb', totalTime: 12, totalTestCases: 3 },
+      { filename: 'spec/c_spec.rb', totalTime: 13, totalTestCases: 2 },
+    ])
+  })
+})
 
 describe('parseJunitXml', () => {
   it('should parse fixture.xml', async () => {
