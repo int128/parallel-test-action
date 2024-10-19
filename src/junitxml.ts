@@ -44,8 +44,6 @@ export type TestCase = {
 }
 
 export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
-  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
-
   function* visit(testSuite: JunitXmlTestSuite): Generator<TestCase> {
     for (const junitXmlTestCase of testSuite.testcase ?? []) {
       yield {
@@ -58,6 +56,7 @@ export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
     }
   }
 
+  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
   const testCases: TestCase[] = []
   for (const testSuite of root) {
     for (const testCase of visit(testSuite)) {
