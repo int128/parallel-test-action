@@ -43,10 +43,24 @@ export type TestCase = {
 }
 
 export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
+  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
+
   function* visit(testSuite: JunitXmlTestSuite): Generator<TestCase> {
+    const determineTestCaseFilename = (junitXmlTestCase: JunitXmlTestCase): string => {
+      if (junitXmlTestCase['@_file']) {
+        return junitXmlTestCase['@_file']
+      }
+      // For Mocha or Cypress, the first <testsuite> element has the filename of the root suite.
+      const mochaRootSuiteFilename = root.at(0)?.['@_file']
+      if (mochaRootSuiteFilename) {
+        return mochaRootSuiteFilename
+      }
+      throw new Error(`Element <testcase> must have "file" attribute (name=${junitXmlTestCase['@_name']})`)
+    }
+
     for (const junitXmlTestCase of testSuite.testcase ?? []) {
       yield {
-        filename: path.normalize(junitXmlTestCase['@_file']),
+        filename: path.normalize(determineTestCaseFilename(junitXmlTestCase)),
         time: junitXmlTestCase['@_time'],
       }
     }
@@ -55,7 +69,6 @@ export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
     }
   }
 
-  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
   const testCases: TestCase[] = []
   for (const testSuite of root) {
     for (const testCase of visit(testSuite)) {
@@ -112,6 +125,7 @@ function assertJunitXml(x: unknown): asserts x is JunitXml {
 type JunitXmlTestSuite = {
   testsuite?: JunitXmlTestSuite[]
   testcase?: JunitXmlTestCase[]
+  '@_file'?: string
 }
 
 function assertTestSuite(x: unknown): asserts x is JunitXmlTestSuite {
@@ -134,7 +148,7 @@ function assertTestSuite(x: unknown): asserts x is JunitXmlTestSuite {
 type JunitXmlTestCase = {
   '@_name': string
   '@_time': number
-  '@_file': string
+  '@_file'?: string
 }
 
 function assertTestCase(x: unknown): asserts x is JunitXmlTestCase {
@@ -144,8 +158,9 @@ function assertTestCase(x: unknown): asserts x is JunitXmlTestCase {
   assert(typeof x['@_name'] === 'string', 'name attribute of <testcase> must be a string')
   assert('@_time' in x, 'Element <testcase> must have "time" attribute')
   assert(typeof x['@_time'] === 'number', 'time attribute of <testcase> must be a number')
-  assert('@_file' in x, 'Element <testcase> must have "file" attribute')
-  assert(typeof x['@_file'] === 'string', 'file attribute of <testcase> must be a string')
+  if ('@_file' in x) {
+    assert(typeof x['@_file'] === 'string', 'file attribute of <testcase> must be a string')
+  }
 }
 
 export const parseJunitXml = (xml: string | Buffer): JunitXml => {

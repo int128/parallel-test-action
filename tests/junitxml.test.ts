@@ -18,6 +18,18 @@ describe('parseTestReportFiles', () => {
       { filename: 'spec/c_spec.rb', totalTime: 13, totalTestCases: 2 },
     ])
   })
+
+  it('should parse cypress.xml', async () => {
+    const testReportFiles = [
+      path.join(__dirname, 'fixtures/cypress1.xml'),
+      path.join(__dirname, 'fixtures/cypress2.xml'),
+    ]
+    const testFiles = await parseTestReportFiles(testReportFiles)
+    expect(testFiles).toEqual([
+      { filename: 'cypress/a_spec.ts', totalTime: 6, totalTestCases: 3 },
+      { filename: 'cypress/b_spec.ts', totalTime: 4, totalTestCases: 1 },
+    ])
+  })
 })
 
 describe('parseJunitXml', () => {
