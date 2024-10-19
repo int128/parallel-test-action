@@ -59,6 +59,7 @@ Here is an example workflow to run Jest in parallel.
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         shard-id: [1, 2, 3]
     runs-on: ubuntu-latest
@@ -94,6 +95,7 @@ Here is an example workflow to run RSpec in parallel.
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         shard-id: [1, 2, 3]
     runs-on: ubuntu-latest
@@ -203,6 +205,7 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         shard-id: [1, 2, 3] # Shard ID starts from #1
     runs-on: ubuntu-latest
