@@ -22,6 +22,51 @@ export const parseTestReportFiles = async (testReportFiles: string[]): Promise<T
   return testFiles
 }
 
+export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
+  const testFiles = new Map<string, TestFile>()
+  for (const testCase of testCases) {
+    const testFilename = path.normalize(testCase.filename)
+    const currentTestFile = testFiles.get(testFilename) ?? {
+      filename: testFilename,
+      totalTime: 0,
+      totalTestCases: 0,
+    }
+    currentTestFile.totalTime += testCase.time
+    currentTestFile.totalTestCases++
+    testFiles.set(testFilename, currentTestFile)
+  }
+  return [...testFiles.values()]
+}
+
+export type TestCase = {
+  filename: string
+  time: number
+}
+
+export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
+  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
+
+  function* visit(testSuite: JunitXmlTestSuite): Generator<TestCase> {
+    for (const junitXmlTestCase of testSuite.testcase ?? []) {
+      yield {
+        filename: junitXmlTestCase['@_file'],
+        time: junitXmlTestCase['@_time'],
+      }
+    }
+    for (const nestedTestSuite of testSuite.testsuite ?? []) {
+      visit(nestedTestSuite)
+    }
+  }
+
+  const testCases: TestCase[] = []
+  for (const testSuite of root) {
+    for (const testCase of visit(testSuite)) {
+      testCases.push(testCase)
+    }
+  }
+  return testCases
+}
+
 const parseTestReportFilesToJunitXml = async (testReportFiles: string[]): Promise<JunitXml[]> => {
   const junitXmls: JunitXml[] = []
   core.startGroup(`Parsing ${testReportFiles.length} test report files`)
@@ -35,44 +80,11 @@ const parseTestReportFilesToJunitXml = async (testReportFiles: string[]): Promis
   return junitXmls
 }
 
-export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
-  const testCases: TestCase[] = []
-  const visit = (testSuite: TestSuite): void => {
-    for (const testCase of testSuite.testcase ?? []) {
-      testCases.push(testCase)
-    }
-    for (const nestedTestSuite of testSuite.testsuite ?? []) {
-      visit(nestedTestSuite)
-    }
-  }
-  const root = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
-  for (const testSuite of root) {
-    visit(testSuite)
-  }
-  return testCases
-}
-
-export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
-  const testFiles = new Map<string, TestFile>()
-  for (const testCase of testCases) {
-    const testFilename = path.normalize(testCase['@_file'])
-    const currentTestFile = testFiles.get(testFilename) ?? {
-      filename: testFilename,
-      totalTime: 0,
-      totalTestCases: 0,
-    }
-    currentTestFile.totalTime += testCase['@_time']
-    currentTestFile.totalTestCases++
-    testFiles.set(testFilename, currentTestFile)
-  }
-  return [...testFiles.values()]
-}
-
 type JunitXml = {
   testsuites?: {
-    testsuite?: TestSuite[]
+    testsuite?: JunitXmlTestSuite[]
   }
-  testsuite?: TestSuite[]
+  testsuite?: JunitXmlTestSuite[]
 }
 
 function assertJunitXml(x: unknown): asserts x is JunitXml {
@@ -99,12 +111,12 @@ function assertJunitXml(x: unknown): asserts x is JunitXml {
   }
 }
 
-type TestSuite = {
-  testsuite?: TestSuite[]
-  testcase?: TestCase[]
+type JunitXmlTestSuite = {
+  testsuite?: JunitXmlTestSuite[]
+  testcase?: JunitXmlTestCase[]
 }
 
-function assertTestSuite(x: unknown): asserts x is TestSuite {
+function assertTestSuite(x: unknown): asserts x is JunitXmlTestSuite {
   assert(typeof x === 'object', 'element testsuite must be an object')
   assert(x != null, 'element testsuite must not be null')
   if ('testsuite' in x) {
@@ -121,13 +133,13 @@ function assertTestSuite(x: unknown): asserts x is TestSuite {
   }
 }
 
-export type TestCase = {
+type JunitXmlTestCase = {
   '@_name': string
   '@_time': number
   '@_file': string
 }
 
-function assertTestCase(x: unknown): asserts x is TestCase {
+function assertTestCase(x: unknown): asserts x is JunitXmlTestCase {
   assert(typeof x === 'object', 'element testcase must be an object')
   assert(x != null, 'element testcase must not be null')
   assert('@_name' in x, 'element testcase must have name attribute')
