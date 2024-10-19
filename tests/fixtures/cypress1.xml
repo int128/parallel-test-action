@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="0" tests="0" failures="0">
+  <testsuite name="Root Suite" timestamp="2024-01-01T00:00:00" tests="0" file="cypress/a_spec.ts" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Page" timestamp="2024-01-01T00:00:00" tests="0" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Component 1" timestamp="2024-01-01T00:00:00" tests="0" time="0" failures="0">
+    <testcase name="Test 1" time="1.0" classname="Test 1">
+    </testcase>
+    <testcase name="Test 2" time="2.0" classname="Test 2">
+    </testcase>
+  </testsuite>
+  <testsuite name="Component 2" timestamp="2024-01-01T00:00:00" tests="4" time="0" failures="0">
+    <testcase name="Test 1" time="3.0" classname="Test 1">
+    </testcase>
+  </testsuite>
+</testsuites>
