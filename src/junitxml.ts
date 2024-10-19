@@ -25,15 +25,14 @@ export const parseTestReportFiles = async (testReportFiles: string[]): Promise<T
 export const groupTestCasesByTestFile = (testCases: TestCase[]): TestFile[] => {
   const testFiles = new Map<string, TestFile>()
   for (const testCase of testCases) {
-    const testFilename = path.normalize(testCase.filename)
-    const currentTestFile = testFiles.get(testFilename) ?? {
-      filename: testFilename,
+    const currentTestFile = testFiles.get(testCase.filename) ?? {
+      filename: testCase.filename,
       totalTime: 0,
       totalTestCases: 0,
     }
     currentTestFile.totalTime += testCase.time
     currentTestFile.totalTestCases++
-    testFiles.set(testFilename, currentTestFile)
+    testFiles.set(testCase.filename, currentTestFile)
   }
   return [...testFiles.values()]
 }
@@ -47,7 +46,7 @@ export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
   function* visit(testSuite: JunitXmlTestSuite): Generator<TestCase> {
     for (const junitXmlTestCase of testSuite.testcase ?? []) {
       yield {
-        filename: junitXmlTestCase['@_file'],
+        filename: path.normalize(junitXmlTestCase['@_file']),
         time: junitXmlTestCase['@_time'],
       }
     }
