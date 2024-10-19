@@ -87,15 +87,15 @@ type JunitXml = {
 }
 
 function assertJunitXml(x: unknown): asserts x is JunitXml {
-  assert(typeof x === 'object', 'root element must be an object')
-  assert(x != null, 'root element must not be null')
+  assert(typeof x === 'object', 'Root element must be an object')
+  assert(x != null, 'Root element must not be null')
 
   if ('testsuites' in x) {
-    assert(typeof x.testsuites === 'object', 'element testsuites must be an object')
-    assert(x.testsuites != null, 'element testsuites must not be null')
+    assert(typeof x.testsuites === 'object', 'Element <testsuites> must be an object')
+    assert(x.testsuites != null, 'Element <testsuites> must not be null')
 
     if ('testsuite' in x.testsuites) {
-      assert(Array.isArray(x.testsuites.testsuite), 'element testsuite must be an array')
+      assert(Array.isArray(x.testsuites.testsuite), 'Element <testsuite> must be an array')
       for (const testsuite of x.testsuites.testsuite) {
         assertTestSuite(testsuite)
       }
@@ -103,7 +103,7 @@ function assertJunitXml(x: unknown): asserts x is JunitXml {
   }
 
   if ('testsuite' in x) {
-    assert(Array.isArray(x.testsuite), 'element testsuite must be an array')
+    assert(Array.isArray(x.testsuite), 'Element <testsuite> must be an array')
     for (const testsuite of x.testsuite) {
       assertTestSuite(testsuite)
     }
@@ -116,16 +116,16 @@ type JunitXmlTestSuite = {
 }
 
 function assertTestSuite(x: unknown): asserts x is JunitXmlTestSuite {
-  assert(typeof x === 'object', 'element testsuite must be an object')
-  assert(x != null, 'element testsuite must not be null')
+  assert(typeof x === 'object', 'Element <testsuite> must be an object')
+  assert(x != null, 'Element <testsuite> must not be null')
   if ('testsuite' in x) {
-    assert(Array.isArray(x.testsuite), 'element testsuite must be an array')
+    assert(Array.isArray(x.testsuite), 'Element <testsuite> must be an array')
     for (const testsuite of x.testsuite) {
       assertTestSuite(testsuite)
     }
   }
   if ('testcase' in x) {
-    assert(Array.isArray(x.testcase), 'element testcase must be an array')
+    assert(Array.isArray(x.testcase), 'Element <testcase> must be an array')
     for (const testcase of x.testcase) {
       assertTestCase(testcase)
     }
@@ -139,14 +139,14 @@ type JunitXmlTestCase = {
 }
 
 function assertTestCase(x: unknown): asserts x is JunitXmlTestCase {
-  assert(typeof x === 'object', 'element testcase must be an object')
-  assert(x != null, 'element testcase must not be null')
-  assert('@_name' in x, 'element testcase must have name attribute')
-  assert(typeof x['@_name'] === 'string', 'name attribute of testcase must be a string')
-  assert('@_time' in x, 'element testcase must have time attribute')
-  assert(typeof x['@_time'] === 'number', 'time attribute of testcase must be a number')
-  assert('@_file' in x, 'element testcase must have file attribute')
-  assert(typeof x['@_file'] === 'string', 'file attribute of testcase must be a string')
+  assert(typeof x === 'object', 'Element <testcase> must be an object')
+  assert(x != null, 'Element <testcase> must not be null')
+  assert('@_name' in x, 'Element <testcase> must have "name" attribute')
+  assert(typeof x['@_name'] === 'string', 'name attribute of <testcase> must be a string')
+  assert('@_time' in x, 'Element <testcase> must have "time" attribute')
+  assert(typeof x['@_time'] === 'number', 'time attribute of <testcase> must be a number')
+  assert('@_file' in x, 'Element <testcase> must have "file" attribute')
+  assert(typeof x['@_file'] === 'string', 'file attribute of <testcase> must be a string')
 }
 
 export const parseJunitXml = (xml: string | Buffer): JunitXml => {
