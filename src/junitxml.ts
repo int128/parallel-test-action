@@ -87,8 +87,8 @@ type JunitXml = {
 }
 
 function assertJunitXml(x: unknown): asserts x is JunitXml {
-  assert(typeof x === 'object', 'Root element must be an object')
-  assert(x != null, 'Root element must not be null')
+  assert(typeof x === 'object', 'Root document must be an object')
+  assert(x != null, 'Root document must not be null')
 
   if ('testsuites' in x) {
     assert(typeof x.testsuites === 'object', 'Element <testsuites> must be an object')
