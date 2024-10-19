@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="rspec" tests="0" skipped="0" failures="0" errors="0" time="0" timestamp="2024-01-01T00:00:00+00:00" hostname="github-actions">
+<properties>
+<property name="seed" value="0"/>
+</properties>
+<testcase classname="spec.a1" name="a1" file="./spec/a_spec.rb" time="1.0"></testcase>
+<testcase classname="spec.a2" name="a2" file="./spec/a_spec.rb" time="2.0"></testcase>
+<testcase classname="spec.b1" name="b1" file="./spec/b_spec.rb" time="3.0"></testcase>
+<testcase classname="spec.b2" name="b2" file="./spec/b_spec.rb" time="4.0"></testcase>
+<testcase classname="spec.b3" name="b3" file="./spec/b_spec.rb" time="5.0"></testcase>
+</testsuite>
