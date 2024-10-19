@@ -1,59 +1,43 @@
 # parallel-test-action [![ts](https://github.com/int128/parallel-test-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/parallel-test-action/actions/workflows/ts.yaml)
 
 This action distributes the test files to the shards based on the estimated time from the test reports.
-If you have a lot of tests, you can reduce the time by running the parallel test jobs.
+You can reduce the time of tests by parallel testing.
 
-## Getting Started
+## Overview
 
-Here is the typical workflow to run the parallel test jobs.
+This action distibutes the test files to the shards based on the estimated time.
+Here is the example of the distribution:
 
-```yaml
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-
-jobs:
-  test:
-    strategy:
-      matrix:
-        shard-id: [1, 2, 3] # Shard ID starts from #1
-    runs-on: ubuntu-latest
-    steps:
-      # (1) Checkout the repository.
-      - uses: actions/checkout@v4
-
-      # (2) Distribute the test files to the shards.
-      - uses: int128/parallel-test-action@v1
-        id: parallel-test
-        with:
-          test-files: '**/*' # Glob pattern of your test files
-          test-report-artifact-name-prefix: test-report- # Find the test reports of this name
-          test-report-branch: main # Find the test reports from the main branch
-          shard-count: 3
-
-      # (3) Run your testing framework.
-      - run: xargs your-testing-framework < "$SHARD_FILE"
-        env:
-          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
-
-      # (4) Upload the test report as an artifact.
-      - uses: actions/upload-artifact@v4
-        with:
-          name: test-report-${{ matrix.shard-id }}
-          path: junit.xml
+```mermaid
+graph TB
+  subgraph Test Files
+    TF1[Test File #1]
+    TF2[Test File #2]
+    TF3[Test File #3]
+    TF4[Test File #4]
+    TF5[Test File #5]
+  end
+  subgraph Shard Files
+    S1[Shard #1]
+    S2[Shard #2]
+    S3[Shard #3]
+  end
+  TF1 --> S1
+  TF2 --> S1
+  TF3 --> S2
+  TF4 --> S3
+  TF5 --> S3
 ```
 
-1. Checkout the repository.
-   This action depends on the working directory to generate the list of test files.
-2. Distribute the test files to the shards.
-   It generates the list of test files for each shard.
-3. Run your testing framework.
-   It should accept the list of test files to run.
-   It should also generate the test report.
-4. Upload the test report as an artifact.
-   The artifact will be used in the future workflow runs.
+Each shard should contain the test files with the similar estimated time.
+This action uses the greedy algorithm.
+
+You need to upload the test reports as artifacts on the default branch.
+This action estimate the time of each test file using the test reports.
+If a test file is not found in the test reports, this action assumes the average time of all test files.
+If no test report is given, this action falls back to the round-robin distribution.
+
+## Examples
 
 ### Jest
 
@@ -125,41 +109,6 @@ You can generate a test report using [rspec_junit_formatter](https://github.com/
 
 ## How it works
 
-### Test files distribution
-
-This action distibutes the test files to the shards based on the estimated time.
-It uses the greedy algorithm.
-
-Here is the example of the distribution:
-
-```mermaid
-graph TB
-  subgraph Test Files
-    TF1[Test File #1]
-    TF2[Test File #2]
-    TF3[Test File #3]
-    TF4[Test File #4]
-    TF5[Test File #5]
-  end
-  subgraph Shard Files
-    S1[Shard #1]
-    S2[Shard #2]
-    S3[Shard #3]
-  end
-  TF1 --> S1
-  TF2 --> S1
-  TF3 --> S2
-  TF4 --> S3
-  TF5 --> S3
-```
-
-Each shard should contain the test files with the similar estimated time.
-
-You need to upload the test reports as artifacts on the default branch.
-It is required to estimate the time of each test file.
-If a test file is not found in the test reports, this action assumes the average time of all test files.
-If no test report is given, this action falls back to the round-robin distribution.
-
 ### Action overview
 
 Here is the inputs and outputs of this action:
@@ -229,6 +178,58 @@ graph TB
 ```
 
 ## Specification
+
+Here is the typical workflow to run the parallel test jobs.
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        shard-id: [1, 2, 3] # Shard ID starts from #1
+    runs-on: ubuntu-latest
+    steps:
+      # (1) Checkout the repository.
+      - uses: actions/checkout@v4
+
+      # (2) Distribute the test files to the shards.
+      - uses: int128/parallel-test-action@v1
+        id: parallel-test
+        with:
+          test-files: '**/*' # Glob pattern of your test files
+          test-report-artifact-name-prefix: test-report- # Find the test reports of this name
+          test-report-branch: main # Find the test reports from the main branch
+          shard-count: 3
+
+      # (3) Run your testing framework.
+      - run: xargs your-testing-framework < "$SHARD_FILE"
+        env:
+          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
+
+      # (4) Upload the test report as an artifact.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.shard-id }}
+          path: junit.xml
+```
+
+Steps:
+
+1. Checkout the repository.
+   This action depends on the working directory to generate the list of test files.
+2. Distribute the test files to the shards.
+   It generates the list of test files for each shard.
+3. Run your testing framework.
+   It should accept the list of test files to run.
+   It should also generate the test report.
+4. Upload the test report as an artifact.
+   The artifact will be used in the future workflow runs.
 
 ### Inputs
 
