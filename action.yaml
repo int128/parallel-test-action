@@ -15,6 +15,10 @@ inputs:
   test-report-branch:
     description: Branch to find the test report artifacts
     required: true
+  test-report-workflow-count:
+    description: Number of workflows to find the test report artifacts
+    required: true
+    default: '1'
   shard-count:
     description: Number of shards
     required: true
