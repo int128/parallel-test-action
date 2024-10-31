@@ -183,7 +183,7 @@ const retryArtifactNotFoundError = async <T>(f: () => Promise<T>): Promise<T> =>
         if (i >= maxAttempt) {
           throw e
         }
-        core.info(`Retrying after ${intervalSec}s: ${String(e)}`)
+        core.info(`Retrying after ${intervalSec}s: ${e.message}`)
         await new Promise((resolve) => setTimeout(resolve, intervalSec * 1000))
         continue
       }
