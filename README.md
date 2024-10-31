@@ -248,18 +248,19 @@ Steps:
 
 ### Inputs
 
-| Name                               | Default                | Description                              |
-| ---------------------------------- | ---------------------- | ---------------------------------------- |
-| `working-directory`                | `.`                    | Working directory                        |
-| `test-files`                       | (required)             | Glob pattern of test files               |
-| `test-report-artifact-name-prefix` | (required)             | Prefix of the test report artifact name  |
-| `test-report-branch`               | (required)             | Branch to find the test report artifacts |
-| `shard-count`                      | (required)             | Number of shards                         |
-| `shards-artifact-name`             | `parallel-test-shards` | Name of the shards artifact              |
-| `token`                            | (github.token)         | GitHub token                             |
+| Name                               | Default        | Description                              |
+| ---------------------------------- | -------------- | ---------------------------------------- |
+| `working-directory`                | `.`            | Working directory                        |
+| `test-files`                       | (required)     | Glob pattern of test files               |
+| `test-report-artifact-name-prefix` | (required)     | Prefix of the test report artifact name  |
+| `test-report-branch`               | (required)     | Branch to find the test report artifacts |
+| `shard-count`                      | (required)     | Number of shards                         |
+| `shards-artifact-name`             | (\*1)          | Name of the shards artifact              |
+| `token`                            | (github.token) | GitHub token                             |
 
-If a single workflow contains the different types of tests,
-you need to explicitly set the `shards-artifact-name` to avoid the conflict.
+(\*1) The value of `shards-artifact-name` must be same in the parallel jobs.
+The default value is `parallel-test-shards--${{ github.job }}`.
+For above example, the shards artifact is uploaded as `parallel-test-shards--test`.
 
 ### Outputs
 
