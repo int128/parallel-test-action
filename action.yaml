@@ -21,7 +21,7 @@ inputs:
   shards-artifact-name:
     description: Name of the shards artifact
     required: true
-    default: parallel-test-shards
+    default: parallel-test-shards--${{ github.job }}
   token:
     description: GitHub token
     required: true
