@@ -9,6 +9,7 @@ const main = async (): Promise<void> => {
     testFiles: core.getInput('test-files', { required: true }),
     testReportArtifactNamePrefix: core.getInput('test-report-artifact-name-prefix', { required: true }),
     testReportBranch: core.getInput('test-report-branch', { required: true }),
+    testReportWorkflowCount: parseInt(core.getInput('test-report-workflow-count', { required: true })),
     shardCount: parseInt(core.getInput('shard-count', { required: true })),
     shardsArtifactName: core.getInput('shards-artifact-name', { required: true }),
     owner: github.context.repo.owner,

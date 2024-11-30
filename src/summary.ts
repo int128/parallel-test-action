@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import { ShardSet } from './shard'
 import { TestWorkflowRun } from './artifact'
 
-export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRun | undefined) => {
+export const writeSummary = (shardSet: ShardSet, testWorkflowRuns: TestWorkflowRun[]) => {
   core.summary.addHeading('Summary of parallel-test-action')
   core.summary.addRaw(
     'This action distributes the test files to the shards based on the estimated time from the test reports.',
@@ -51,11 +51,14 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   )
 
   core.summary.addHeading('Test reports', 2)
-  if (testWorkflowRun) {
-    core.summary.addRaw('This action downloaded the test reports from ')
-    core.summary.addLink('the last success workflow run', testWorkflowRun.url)
-    core.summary.addHeading('Files', 3)
-    core.summary.addList(testWorkflowRun.testReportFiles)
+  if (testWorkflowRuns.length > 0) {
+    core.summary.addRaw('This action downloaded the test reports from:')
+    for (const [index, testWorkflowRun] of testWorkflowRuns.entries()) {
+      core.summary.addHeading(`Workflow Run #${index + 1}`, 3)
+      core.summary.addLink(testWorkflowRun.url, testWorkflowRun.url)
+      core.summary.addHeading(`Files`, 4)
+      core.summary.addList(testWorkflowRun.testReportFiles)
+    }
   } else {
     core.summary.addRaw('No test reports found')
   }

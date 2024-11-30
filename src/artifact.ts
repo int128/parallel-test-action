@@ -6,6 +6,7 @@ import { Octokit } from './github'
 
 type Inputs = {
   testReportWorkflowFilename: string
+  testReportWorkflowCount: number
   testReportArtifactNamePrefix: string
   testReportBranch: string
   testReportDirectory: string
@@ -22,18 +23,18 @@ export type TestWorkflowRun = {
 export const downloadTestReportsFromLastWorkflowRuns = async (
   octokit: Octokit,
   inputs: Inputs,
-): Promise<TestWorkflowRun | undefined> => {
-  const lastWorkflowRuns = await findLastWorkflowRuns(octokit, inputs)
-  if (lastWorkflowRuns.length === 0) {
-    return
-  }
-  const lastWorkflowRun = lastWorkflowRuns[0]
+): Promise<TestWorkflowRun[]> => {
   const artifactClient = new DefaultArtifactClient()
-  const testReportFiles = await downloadTestReportArtifacts(octokit, artifactClient, inputs, lastWorkflowRun.id)
-  return {
-    url: lastWorkflowRun.html_url,
-    testReportFiles,
+  const workflowRuns = await findLastWorkflowRuns(octokit, inputs)
+  const testWorkflowRuns: TestWorkflowRun[] = []
+  for (const lastWorkflowRun of workflowRuns) {
+    const testReportFiles = await downloadTestReportArtifacts(octokit, artifactClient, inputs, lastWorkflowRun.id)
+    testWorkflowRuns.push({
+      url: lastWorkflowRun.url,
+      testReportFiles,
+    })
   }
+  return testWorkflowRuns
 }
 
 const findLastWorkflowRuns = async (octokit: Octokit, inputs: Inputs) => {
@@ -44,7 +45,7 @@ const findLastWorkflowRuns = async (octokit: Octokit, inputs: Inputs) => {
     workflow_id: inputs.testReportWorkflowFilename,
     branch: inputs.testReportBranch,
     status: 'success',
-    per_page: 1,
+    per_page: inputs.testReportWorkflowCount,
   })
   core.info(`Found ${listWorkflowRuns.workflow_runs.length} workflow run:`)
   for (const lastWorkflowRun of listWorkflowRuns.workflow_runs) {
