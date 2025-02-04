@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: 20
-      - run: corepack enable pnpm
+      - run: npm install -g pnpm@latest-10
       - run: pnpm i
       - run: pnpm build
       - name: Run int128/parallel-test-action
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: 20
-      - run: corepack enable pnpm
+      - run: npm install -g pnpm@latest-10
       - run: pnpm i
       - run: pnpm lint --fix
       - run: pnpm format
