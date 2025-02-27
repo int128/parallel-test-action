@@ -24,8 +24,8 @@ importers:
         specifier: 7.1.4
         version: 7.1.4(@octokit/core@5.2.0)
       fast-xml-parser:
-        specifier: 4.5.3
-        version: 4.5.3
+        specifier: 5.0.8
+        version: 5.0.8
     devDependencies:
       '@eslint/js':
         specifier: 9.21.0
@@ -1158,6 +1158,10 @@ packages:
     resolution: {integrity: sha512-RKihhV+SHsIUGXObeVy9AXiBbFwkVk7Syp8XgwN5U3JV416+Gwp/GO9i0JYKmikykgz/UHRrrV4ROuZEo/T0ig==}
     hasBin: true
 
+  fast-xml-parser@5.0.8:
+    resolution: {integrity: sha512-qY8NiI5L8ff00F2giyICiJxSSKHO52tC36LJqx2JtvGyAd5ZfehC/l4iUVVHpmpIa6sM9N5mneSLHQG2INGoHA==}
+    hasBin: true
+
   fastq@1.17.1:
     resolution: {integrity: sha512-sRVD3lWVIXWg6By68ZN7vho9a1pQcN/WBFaAAsDDFzlJjvoGx0P8z7V1t72grFJfJhu3YPZBuu25f7Kaw2jN1w==}
 
@@ -1937,6 +1941,9 @@ packages:
 
   strnum@1.1.1:
     resolution: {integrity: sha512-O7aCHfYCamLCctjAiaucmE+fHf2DYHkus2OKCn4Wv03sykfFtgeECn505X6K4mPl8CRNd/qurC9guq+ynoN4pw==}
+
+  strnum@2.0.5:
+    resolution: {integrity: sha512-YAT3K/sgpCUxhxNMrrdhtod3jckkpYwH6JAuwmUdXZsmzH1wUyzTMrrK2wYCEEqlKwrWDd35NeuUkbBy/1iK+Q==}
 
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
@@ -3559,6 +3566,10 @@ snapshots:
     dependencies:
       strnum: 1.1.1
 
+  fast-xml-parser@5.0.8:
+    dependencies:
+      strnum: 2.0.5
+
   fastq@1.17.1:
     dependencies:
       reusify: 1.0.4
@@ -4458,6 +4469,8 @@ snapshots:
   strip-json-comments@3.1.1: {}
 
   strnum@1.1.1: {}
+
+  strnum@2.0.5: {}
 
   supports-color@5.5.0:
     dependencies:
