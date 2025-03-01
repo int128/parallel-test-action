@@ -68,11 +68,15 @@ const downloadTestReportArtifacts = async (
   })
   core.info(`Found ${listArtifacts.length} artifacts:`)
   for (const workflowRunArtifact of listArtifacts) {
-    const metadata = [`${workflowRunArtifact.size_in_bytes} bytes`, `created_at: ${workflowRunArtifact.created_at}`]
+    const columns = [
+      workflowRunArtifact.name,
+      `${workflowRunArtifact.size_in_bytes} bytes`,
+      `created_at: ${workflowRunArtifact.created_at}`,
+    ]
     if (workflowRunArtifact.expired) {
-      metadata.push('expired')
+      columns.push('expired')
     }
-    core.info(`- ${workflowRunArtifact.name} (${metadata.join(', ')})`)
+    core.info(`- ${columns.join(', ')}`)
   }
 
   const testReportArtifacts = listArtifacts.filter(
