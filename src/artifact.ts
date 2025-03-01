@@ -68,12 +68,16 @@ const downloadTestReportArtifacts = async (
   })
   core.info(`Found ${listArtifacts.length} artifacts:`)
   for (const workflowRunArtifact of listArtifacts) {
-    core.info(
-      `- ${workflowRunArtifact.name} (${workflowRunArtifact.size_in_bytes} bytes, ${workflowRunArtifact.created_at})`,
-    )
+    const metadata = [`${workflowRunArtifact.size_in_bytes} bytes`, `created_at: ${workflowRunArtifact.created_at}`]
+    if (workflowRunArtifact.expired) {
+      metadata.push('expired')
+    }
+    core.info(`- ${workflowRunArtifact.name} (${metadata.join(', ')})`)
   }
-  const testReportArtifacts = listArtifacts.filter((workflowRunArtifact) =>
-    workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix),
+
+  const testReportArtifacts = listArtifacts.filter(
+    (workflowRunArtifact) =>
+      !workflowRunArtifact.expired && workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix),
   )
   core.info(`Filtered ${testReportArtifacts.length} artifacts of the test reports`)
 
