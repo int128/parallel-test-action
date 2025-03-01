@@ -68,21 +68,19 @@ const downloadTestReportArtifacts = async (
   })
   core.info(`Found ${listArtifacts.length} artifacts:`)
   for (const workflowRunArtifact of listArtifacts) {
-    const columns = [
-      workflowRunArtifact.name,
-      `${workflowRunArtifact.size_in_bytes} bytes`,
-      `created_at: ${workflowRunArtifact.created_at}`,
-    ]
+    const columns = [`${workflowRunArtifact.size_in_bytes} bytes`, workflowRunArtifact.created_at]
     if (workflowRunArtifact.expired) {
       columns.push('expired')
     }
-    core.info(`- ${columns.join(', ')}`)
+    core.info(`- ${workflowRunArtifact.name} (${columns.join(', ')})`)
   }
 
-  const testReportArtifacts = listArtifacts.filter(
-    (workflowRunArtifact) =>
-      !workflowRunArtifact.expired && workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix),
-  )
+  const testReportArtifacts = listArtifacts.filter((workflowRunArtifact) => {
+    if (workflowRunArtifact.expired) {
+      return false
+    }
+    return workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix)
+  })
   core.info(`Filtered ${testReportArtifacts.length} artifacts of the test reports`)
 
   for (const testReportArtifact of testReportArtifacts) {
