@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@actions/artifact':
-        specifier: 2.3.1
-        version: 2.3.1
+        specifier: 2.3.2
+        version: 2.3.2
       '@actions/core':
         specifier: 1.11.1
         version: 1.11.1
@@ -76,8 +76,8 @@ packages:
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
     engines: {node: '>=0.10.0'}
 
-  '@actions/artifact@2.3.1':
-    resolution: {integrity: sha512-3uW25BNAqbMBcasNK+DX4I0Vl8aQdo65K6DRufJiNYjqfhSMfeRE4YGjWLaKmF+H+7bp1ADlQ5NksC61fpvYbQ==}
+  '@actions/artifact@2.3.2':
+    resolution: {integrity: sha512-uX2Mr5KEPcwnzqa0Og9wOTEKIae6C/yx9P/m8bIglzCS5nZDkcQC/zRWjjoEsyVecL6oQpBx5BuqQj/yuVm0gw==}
 
   '@actions/core@1.11.1':
     resolution: {integrity: sha512-hXJCSrkwfA46Vd9Z3q4cpEpHB1rL5NG04+/rbqW9d3+CSvtB1tYe8UTpAlixa1vj0m/ULglfEK2UKxMGxCxv5A==}
@@ -2164,7 +2164,7 @@ snapshots:
 
   '@aashutoshrathi/word-wrap@1.2.6': {}
 
-  '@actions/artifact@2.3.1':
+  '@actions/artifact@2.3.2':
     dependencies:
       '@actions/core': 1.11.1
       '@actions/github': 5.1.1
