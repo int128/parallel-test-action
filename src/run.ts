@@ -3,16 +3,16 @@ import * as fs from 'fs/promises'
 import * as glob from '@actions/glob'
 import * as os from 'os'
 import * as path from 'path'
-import { getOctokit } from './github'
-import { downloadTestReportsFromLastWorkflowRuns } from './artifact'
-import { parseTestReportFiles } from './junitxml'
+import { getOctokit } from './github.js'
+import { downloadTestReportsFromLastWorkflowRuns } from './artifact.js'
+import { parseTestReportFiles } from './junitxml.js'
 import {
   tryDownloadShardsIfAlreadyExists,
   distributeTestFilesToShards,
   writeShardsWithLock,
   verifyTestFiles,
-} from './shard'
-import { writeSummary } from './summary'
+} from './shard.js'
+import { writeSummary } from './summary.js'
 
 type Inputs = {
   workingDirectory: string
