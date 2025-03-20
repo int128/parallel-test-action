@@ -1,4 +1,4 @@
-import { formatTimeInMinSec } from '../src/summary'
+import { formatTimeInMinSec } from '../src/summary.js'
 
 describe('formatTimeInMinSec', () => {
   it.each([

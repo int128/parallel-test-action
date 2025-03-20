@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import * as glob from '@actions/glob'
 import * as path from 'path'
 import { ArtifactClient, DefaultArtifactClient } from '@actions/artifact'
-import { Octokit } from './github'
+import { Octokit } from './github.js'
 
 type Inputs = {
   testReportWorkflowFilename: string

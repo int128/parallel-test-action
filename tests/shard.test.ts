@@ -1,4 +1,4 @@
-import { distributeTestFilesToShards } from '../src/shard'
+import { distributeTestFilesToShards } from '../src/shard.js'
 
 describe('distributeTestFilesToShards', () => {
   it('should distribute test files to shards', () => {

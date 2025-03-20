@@ -6,7 +6,7 @@ import {
   parseJunitXml,
   parseTestReportFiles,
   TestCase,
-} from '../src/junitxml'
+} from '../src/junitxml.js'
 
 describe('parseTestReportFiles', () => {
   it('should parse rspec.xml', async () => {
