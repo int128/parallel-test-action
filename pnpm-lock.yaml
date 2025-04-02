@@ -24,8 +24,8 @@ importers:
         specifier: 7.2.0
         version: 7.2.0(@octokit/core@5.2.0)
       fast-xml-parser:
-        specifier: 5.0.9
-        version: 5.0.9
+        specifier: 5.1.0
+        version: 5.1.0
     devDependencies:
       '@eslint/js':
         specifier: 9.23.0
@@ -1162,8 +1162,8 @@ packages:
     resolution: {integrity: sha512-RKihhV+SHsIUGXObeVy9AXiBbFwkVk7Syp8XgwN5U3JV416+Gwp/GO9i0JYKmikykgz/UHRrrV4ROuZEo/T0ig==}
     hasBin: true
 
-  fast-xml-parser@5.0.9:
-    resolution: {integrity: sha512-2mBwCiuW3ycKQQ6SOesSB8WeF+fIGb6I/GG5vU5/XEptwFFhp9PE8b9O7fbs2dpq9fXn4ULR3UsfydNUCntf5A==}
+  fast-xml-parser@5.1.0:
+    resolution: {integrity: sha512-6fCOoEdpD/hU5fUDviXh0HE9aOiW6En0+4jeyY05F9lORwq6kaO4CrW+ke/hBKnr1pCldU8AVFITwFJEnz8O/w==}
     hasBin: true
 
   fastq@1.17.1:
@@ -3565,7 +3565,7 @@ snapshots:
     dependencies:
       strnum: 1.1.1
 
-  fast-xml-parser@5.0.9:
+  fast-xml-parser@5.1.0:
     dependencies:
       strnum: 2.0.5
 
