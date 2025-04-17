@@ -1,3 +1,6 @@
+import { describe } from 'vitest'
+import { it } from 'vitest'
+import { expect } from 'vitest'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import {
