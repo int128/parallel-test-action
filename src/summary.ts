@@ -31,6 +31,7 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   ])
 
   core.summary.addHeading('Test files in the working directory', 2)
+  core.summary.addRaw('<details>')
   core.summary.addTable([
     [
       { data: 'Test file', header: true },
@@ -49,6 +50,7 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
     'If a test file does not exist in the test reports, this action assumes the average time of all test files.',
     true,
   )
+  core.summary.addRaw('</details>')
 
   core.summary.addHeading('Test reports', 2)
   if (testWorkflowRun) {
