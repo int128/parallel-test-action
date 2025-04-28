@@ -7,6 +7,7 @@ on:
       - tests/**
       - '*.json'
       - '*.yaml'
+      - '*.config.*'
       - .github/workflows/ts.yaml
   push:
     branches:
@@ -16,18 +17,13 @@ on:
       - tests/**
       - '*.json'
       - '*.yaml'
+      - '*.config.*'
       - .github/workflows/ts.yaml
 
 jobs:
   test:
-    strategy:
-      matrix:
-        shard-id: [1, 2]
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      actions: read
-      contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -35,23 +31,7 @@ jobs:
           node-version: 20
       - run: npm install -g pnpm@latest-10
       - run: pnpm i
-      - run: pnpm build
-      - name: Run int128/parallel-test-action
-        id: parallel-test
-        uses: ./
-        with:
-          test-files: 'tests/**/*.test.ts'
-          test-report-branch: main
-          test-report-artifact-name-prefix: test-report-
-          shard-count: 2
-      - run: cat "$SHARD_FILE"
-        env:
-          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
       - run: pnpm run test
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: test-report-${{ matrix.shard-id }}
-          path: junit.xml
 
   generate:
     runs-on: ubuntu-latest
