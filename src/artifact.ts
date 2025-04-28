@@ -87,12 +87,6 @@ const downloadTestReportArtifacts = async (
     await core.group(`Downloading the artifact: ${testReportArtifact.name}`, () =>
       artifactClient.downloadArtifact(testReportArtifact.id, {
         path: path.join(inputs.testReportDirectory, `${workflowRunId}`, testReportArtifact.name),
-        findBy: {
-          workflowRunId: workflowRunId,
-          repositoryOwner: inputs.owner,
-          repositoryName: inputs.repo,
-          token: inputs.token,
-        },
       }),
     )
   }
