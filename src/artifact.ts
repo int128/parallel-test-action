@@ -84,7 +84,6 @@ const downloadTestReportArtifacts = async (
   core.info(`Filtered ${testReportArtifacts.length} artifacts of the test reports`)
 
   for (const testReportArtifact of testReportArtifacts) {
-    // TEST
     await core.group(`Downloading the artifact: ${testReportArtifact.name}`, () =>
       artifactClient.downloadArtifact(testReportArtifact.id, {
         path: path.join(inputs.testReportDirectory, `${workflowRunId}`, testReportArtifact.name),
