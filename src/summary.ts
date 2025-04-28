@@ -40,9 +40,9 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
     ]),
     [
       { data: 'Total', header: true },
-      { data: `${shardSet.shards.reduce((x, y) => x + y.testFiles.length, 0)}` },
-      { data: `${shardSet.shards.reduce((x, y) => x + y.totalTestCases, 0)}` },
-      { data: formatTimeInMinSec(shardSet.shards.reduce((x, y) => x + y.totalTime, 0)) },
+      { data: `${sumArray(shardSet.shards.map((x) => x.testFiles.length))}` },
+      { data: `${sumArray(shardSet.shards.map((x) => x.totalTestCases))}` },
+      { data: formatTimeInMinSec(sumArray(shardSet.shards.map((x) => x.totalTime))) },
     ],
   ])
 
@@ -61,6 +61,12 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
       f.existsInTestReports ? `${f.totalTestCases}` : `-`,
       f.existsInTestReports ? formatTimeInMinSec(f.totalTime) : `-`,
     ]),
+    [
+      { data: 'Total', header: true },
+      { data: `${shardSet.workingTestFiles.length}` },
+      { data: `${sumArray(shardSet.workingTestFiles.map((x) => x.totalTestCases))}` },
+      { data: formatTimeInMinSec(sumArray(shardSet.workingTestFiles.map((x) => x.totalTime))) },
+    ],
   ])
   core.summary.addRaw(
     'If a test file does not exist in the test reports, this action assumes the average time of all test files.',
@@ -75,3 +81,5 @@ export const formatTimeInMinSec = (seconds: number): string => {
   const zeroPadSeconds = remainingSeconds < 10 ? `0` : ``
   return `${minutes}:${zeroPadSeconds}${remainingSeconds.toFixed(1)}`
 }
+
+const sumArray = (arr: number[]): number => arr.reduce((acc, val) => acc + val, 0)
