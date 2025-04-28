@@ -10,8 +10,10 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   )
 
   core.summary.addHeading('Input: Test files', 3)
-  core.summary.addRaw(`Found ${shardSet.workingTestFiles.length} test files in the working directory.`, true)
   core.summary.addRaw('<details>')
+  core.summary.addRaw(
+    `<summary>Found ${shardSet.workingTestFiles.length} test files in the working directory.</summary>`,
+  )
   core.summary.addTable([
     [
       { data: 'Test file', header: true },
@@ -34,10 +36,10 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
 
   core.summary.addHeading('Input: Test reports', 3)
   if (testWorkflowRun) {
-    core.summary.addRaw('This action downloaded the test reports from ')
+    core.summary.addRaw(`Downloaded ${testWorkflowRun.testReportFiles.length} test reports from `)
     core.summary.addLink('the last success workflow run', testWorkflowRun.url)
     core.summary.addRaw(' to estimate the time of the test files.')
-    core.summary.addHeading('Downloaded files', 4)
+    core.summary.addBreak()
     core.summary.addList(testWorkflowRun.testReportFiles)
   } else {
     core.summary.addRaw('No test reports found in the last success workflow run.')
