@@ -10,29 +10,7 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   )
 
   core.summary.addHeading('Input: Test files', 3)
-  core.summary.addRaw('<details>')
-  core.summary.addRaw(
-    `<summary>Found ${shardSet.workingTestFiles.length} test files in the working directory.</summary>`,
-  )
-  core.summary.addTable([
-    [
-      { data: 'Test file', header: true },
-      { data: 'Test cases', header: true },
-      { data: 'Total time (m:s)', header: true },
-      { data: 'Shard', header: true },
-    ],
-    ...shardSet.workingTestFiles.map((f) => [
-      f.filename,
-      f.existsInTestReports ? `${f.totalTestCases}` : `-`,
-      f.existsInTestReports ? formatTimeInMinSec(f.totalTime) : `-`,
-      f.assignedShardId ? `#${f.assignedShardId}` : `-`,
-    ]),
-  ])
-  core.summary.addRaw(
-    'If a test file does not exist in the test reports, this action assumes the average time of all test files.',
-    true,
-  )
-  core.summary.addRaw('</details>')
+  core.summary.addRaw(`Found ${shardSet.workingTestFiles.length} test files in the working directory.`)
 
   core.summary.addHeading('Input: Test reports', 3)
   if (testWorkflowRun) {
@@ -49,7 +27,7 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   core.summary.addHeading('Output: Test shards', 3)
   core.summary.addTable([
     [
-      { data: 'ID', header: true },
+      { data: 'Shard ID', header: true },
       { data: 'Test files', header: true },
       { data: 'Estimated test cases', header: true },
       { data: 'Estimated time (m:s)', header: true },
@@ -67,6 +45,28 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
       { data: formatTimeInMinSec(shardSet.shards.reduce((x, y) => x + y.totalTime, 0)) },
     ],
   ])
+
+  core.summary.addRaw('<details>')
+  core.summary.addRaw(`<summary>Details of ${shardSet.workingTestFiles.length} test files</summary>`)
+  core.summary.addTable([
+    [
+      { data: 'Shard ID', header: true },
+      { data: 'Test file', header: true },
+      { data: 'Estimated test cases', header: true },
+      { data: 'Estimated time (m:s)', header: true },
+    ],
+    ...shardSet.workingTestFiles.map((f) => [
+      f.assignedShardId ? `#${f.assignedShardId}` : `-`,
+      f.filename,
+      f.existsInTestReports ? `${f.totalTestCases}` : `-`,
+      f.existsInTestReports ? formatTimeInMinSec(f.totalTime) : `-`,
+    ]),
+  ])
+  core.summary.addRaw(
+    'If a test file does not exist in the test reports, this action assumes the average time of all test files.',
+    true,
+  )
+  core.summary.addRaw('</details>')
 }
 
 export const formatTimeInMinSec = (seconds: number): string => {
