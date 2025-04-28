@@ -4,10 +4,6 @@ import { TestWorkflowRun } from './artifact.js'
 
 export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRun | undefined) => {
   core.summary.addHeading('Summary of parallel-test-action', 2)
-  core.summary.addRaw(
-    'This action distributes the test files to the shards based on the estimated time from the test reports.',
-    true,
-  )
 
   core.summary.addHeading('Input: Test files', 3)
   core.summary.addRaw(`Found ${shardSet.workingTestFiles.length} test files in the working directory.`)
@@ -25,6 +21,8 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   }
 
   core.summary.addHeading('Output: Test shards', 3)
+  core.summary.addRaw(`Tests are distributed across ${shardSet.shards.length} parallel shards.`)
+
   core.summary.addTable([
     [
       { data: 'Shard ID', header: true },
