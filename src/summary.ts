@@ -21,7 +21,9 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   }
 
   core.summary.addHeading('Output: Test shards', 3)
+  core.summary.addRaw('<p>')
   core.summary.addRaw(`Tests are distributed across ${shardSet.shards.length} parallel shards.`)
+  core.summary.addRaw('</p>')
 
   core.summary.addTable([
     [
