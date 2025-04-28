@@ -7,6 +7,7 @@ on:
       - tests/**
       - '*.json'
       - '*.yaml'
+      - '*.config.*'
       - .github/workflows/ts.yaml
   push:
     branches:
@@ -16,6 +17,7 @@ on:
       - tests/**
       - '*.json'
       - '*.yaml'
+      - '*.config.*'
       - .github/workflows/ts.yaml
 
 jobs:
@@ -52,6 +54,7 @@ jobs:
         with:
           name: test-report-${{ matrix.shard-id }}
           path: junit.xml
+          if-no-files-found: error
 
   test-with-head:
     if: github.event_name == 'pull_request'
