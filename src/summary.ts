@@ -36,11 +36,11 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
 
   core.summary.addHeading('Input: Test reports', 3)
   if (testWorkflowRun) {
+    core.summary.addRaw('<p>')
     core.summary.addRaw(`Downloaded ${testWorkflowRun.testReportFiles.length} test reports from `)
     core.summary.addLink('the last success workflow run', testWorkflowRun.url)
     core.summary.addRaw(' to estimate the time of the test files.')
-    core.summary.addBreak()
-    core.summary.addBreak()
+    core.summary.addRaw('</p>')
     core.summary.addList(testWorkflowRun.testReportFiles)
   } else {
     core.summary.addRaw('No test reports found in the last success workflow run.')
