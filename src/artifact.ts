@@ -48,7 +48,7 @@ const findLastWorkflowRuns = async (octokit: Octokit, inputs: Inputs) => {
   })
   core.info(`Found ${listWorkflowRuns.workflow_runs.length} workflow run:`)
   for (const lastWorkflowRun of listWorkflowRuns.workflow_runs) {
-    core.info(`- ${lastWorkflowRun.id} (${lastWorkflowRun.created_at}) ${lastWorkflowRun.url}`)
+    core.info(`- ${lastWorkflowRun.id} (${lastWorkflowRun.created_at}) ${lastWorkflowRun.html_url}`)
   }
   return listWorkflowRuns.workflow_runs
 }
