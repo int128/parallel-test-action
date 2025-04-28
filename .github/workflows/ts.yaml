@@ -41,7 +41,7 @@ jobs:
         uses: ./
         with:
           test-files: 'tests/**/*.test.ts'
-          test-report-branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          test-report-branch: main
           test-report-artifact-name-prefix: test-report-
           shard-count: 2
       - run: cat "$SHARD_FILE"
