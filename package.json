@@ -22,7 +22,6 @@
     "@vercel/ncc": "0.38.3",
     "@vitest/eslint-plugin": "1.1.44",
     "eslint": "9.26.0",
-    "jest-junit": "16.0.0",
     "pnpm": "10.11.0",
     "prettier": "3.5.3",
     "typescript": "5.8.3",
