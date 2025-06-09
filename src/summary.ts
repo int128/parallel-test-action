@@ -63,10 +63,8 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   if (testWorkflowRun) {
     core.summary.addRaw('<p>')
     core.summary.addRaw(
-      `The estimated time is calculated from ${testWorkflowRun.testReportFiles.length} test reports of `,
+      `The time is estimated from ${testWorkflowRun.testReportFiles.length} test reports of <a href="${testWorkflowRun.url}">the workflow run</a>.`,
     )
-    core.summary.addLink('the workflow run', testWorkflowRun.url)
-    core.summary.addRaw('.')
     core.summary.addRaw('</p>')
   } else {
     core.summary.addRaw('No test reports found in the last workflow runs.')
