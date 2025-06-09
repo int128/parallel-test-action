@@ -1,15 +1,37 @@
 import assert from 'assert'
-import * as github from '@actions/github'
+import * as fs from 'fs/promises'
+import { Octokit } from '@octokit/action'
+import { WebhookEvent } from '@octokit/webhooks-types'
 import { retry } from '@octokit/plugin-retry'
 
-export type Octokit = ReturnType<typeof github.getOctokit>
+export const getOctokit = () => new (Octokit.plugin(retry))()
 
-export const getOctokit = (token: string): Octokit => github.getOctokit(token, {}, retry)
+export type Context = {
+  repo: {
+    owner: string
+    repo: string
+  }
+  runnerTemp: string
+  workflowRef: string
+  payload: WebhookEvent
+}
 
-export const getWorkflowFilename = () => {
-  assert(process.env.GITHUB_WORKFLOW_REF)
-  const workflowRefMatcher = process.env.GITHUB_WORKFLOW_REF.match(/([^/]+?)@/)
-  assert(workflowRefMatcher)
-  assert(workflowRefMatcher.length > 0)
-  return workflowRefMatcher[1]
+export const getContext = async (): Promise<Context> => {
+  // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
+  return {
+    repo: getRepo(),
+    runnerTemp: getEnv('RUNNER_TEMP'),
+    workflowRef: getEnv('GITHUB_WORKFLOW_REF'),
+    payload: JSON.parse(await fs.readFile(getEnv('GITHUB_EVENT_PATH'), 'utf-8')) as WebhookEvent,
+  }
+}
+
+const getRepo = () => {
+  const [owner, repo] = getEnv('GITHUB_REPOSITORY').split('/')
+  return { owner, repo }
+}
+
+const getEnv = (name: string): string => {
+  assert(process.env[name], `${name} is required`)
+  return process.env[name]
 }

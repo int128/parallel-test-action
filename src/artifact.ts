@@ -2,15 +2,14 @@ import * as core from '@actions/core'
 import * as glob from '@actions/glob'
 import * as path from 'path'
 import { ArtifactClient, DefaultArtifactClient } from '@actions/artifact'
-import { Octokit } from './github.js'
+import { Context } from './github.js'
+import { Octokit } from '@octokit/action'
 
 type Inputs = {
   testReportWorkflowFilename: string
   testReportArtifactNamePrefix: string
   testReportBranch: string
   testReportDirectory: string
-  owner: string
-  repo: string
   token: string
 }
 
@@ -21,26 +20,33 @@ export type TestWorkflowRun = {
 
 export const downloadTestReportsFromLastWorkflowRuns = async (
   octokit: Octokit,
+  context: Context,
   inputs: Inputs,
 ): Promise<TestWorkflowRun | undefined> => {
-  const lastWorkflowRuns = await findLastWorkflowRuns(octokit, inputs)
+  const lastWorkflowRuns = await findLastWorkflowRuns(octokit, context, inputs)
   if (lastWorkflowRuns.length === 0) {
     return
   }
   const lastWorkflowRun = lastWorkflowRuns[0]
   const artifactClient = new DefaultArtifactClient()
-  const testReportFiles = await downloadTestReportArtifacts(octokit, artifactClient, inputs, lastWorkflowRun.id)
+  const testReportFiles = await downloadTestReportArtifacts(
+    octokit,
+    context,
+    artifactClient,
+    inputs,
+    lastWorkflowRun.id,
+  )
   return {
     url: lastWorkflowRun.html_url,
     testReportFiles,
   }
 }
 
-const findLastWorkflowRuns = async (octokit: Octokit, inputs: Inputs) => {
+const findLastWorkflowRuns = async (octokit: Octokit, context: Context, inputs: Inputs) => {
   core.info(`Finding the last success workflow run on ${inputs.testReportBranch} branch`)
   const { data: listWorkflowRuns } = await octokit.rest.actions.listWorkflowRuns({
-    owner: inputs.owner,
-    repo: inputs.repo,
+    owner: context.repo.owner,
+    repo: context.repo.repo,
     workflow_id: inputs.testReportWorkflowFilename,
     branch: inputs.testReportBranch,
     status: 'success',
@@ -55,14 +61,15 @@ const findLastWorkflowRuns = async (octokit: Octokit, inputs: Inputs) => {
 
 const downloadTestReportArtifacts = async (
   octokit: Octokit,
+  context: Context,
   artifactClient: ArtifactClient,
   inputs: Inputs,
   workflowRunId: number,
 ) => {
   core.info(`Finding the artifacts of the last workflow run`)
   const listArtifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
-    owner: inputs.owner,
-    repo: inputs.repo,
+    owner: context.repo.owner,
+    repo: context.repo.repo,
     run_id: workflowRunId,
     per_page: 100,
   })
@@ -89,8 +96,9 @@ const downloadTestReportArtifacts = async (
         path: path.join(inputs.testReportDirectory, `${workflowRunId}`, testReportArtifact.name),
         findBy: {
           workflowRunId: workflowRunId,
-          repositoryOwner: inputs.owner,
-          repositoryName: inputs.repo,
+          repositoryOwner: context.repo.owner,
+          repositoryName: context.repo.repo,
+          // This depends on @actions/github to call the Download Artifact API.
           token: inputs.token,
         },
       }),
