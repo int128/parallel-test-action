@@ -55,10 +55,11 @@ const findLastWorkflowRuns = async (branch: string, octokit: Octokit, context: C
     status: 'success',
     per_page: 10,
   })
-  core.info(`Found ${listWorkflowRuns.workflow_runs.length} workflow runs:`)
+  core.startGroup(`Found ${listWorkflowRuns.workflow_runs.length} workflow runs`)
   for (const lastWorkflowRun of listWorkflowRuns.workflow_runs) {
     core.info(`- ${lastWorkflowRun.id} (${lastWorkflowRun.created_at}) ${lastWorkflowRun.html_url}`)
   }
+  core.endGroup()
   return listWorkflowRuns.workflow_runs
 }
 
@@ -83,19 +84,19 @@ const downloadTestReportArtifacts = async (
     run_id: workflowRunId,
     per_page: 100,
   })
-  core.info(`Found ${workflowRunArtifacts.length} artifacts of the workflow run`)
+  core.info(`Found ${workflowRunArtifacts.length} artifacts of the workflow run ${workflowRunId}`)
 
   const testReportArtifacts = workflowRunArtifacts.filter(
     (artifact) => !artifact.expired && artifact.name.startsWith(inputs.testReportArtifactNamePrefix),
   )
-  core.info(`Found ${testReportArtifacts.length} artifacts of the test reports:`)
+  core.info(`Found ${testReportArtifacts.length} test report artifacts:`)
   for (const artifact of testReportArtifacts) {
     core.info(`- ${artifact.name} (${artifact.size_in_bytes} bytes, ${artifact.created_at})`)
   }
 
   await fs.rm(inputs.testReportDirectory, { recursive: true, force: true })
   for (const artifact of testReportArtifacts) {
-    await core.group(`Downloading the artifact: ${artifact.name}`, () =>
+    await core.group(`Downloading the artifact ${artifact.name} from the workflow run ${workflowRunId}`, () =>
       artifactClient.downloadArtifact(artifact.id, {
         path: path.join(inputs.testReportDirectory, `${workflowRunId}`, artifact.name),
         findBy: {
