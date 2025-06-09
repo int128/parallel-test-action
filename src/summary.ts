@@ -59,11 +59,11 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   )
   core.summary.addRaw('</details>')
 
-  core.summary.addHeading('Test reports', 3)
+  core.summary.addHeading('Input', 3)
   if (testWorkflowRun) {
     core.summary.addRaw('<p>')
     core.summary.addRaw(
-      `The estimated time of the test files is based on ${testWorkflowRun.testReportFiles.length} test reports of `,
+      `The estimated time of the test files are calculated from ${testWorkflowRun.testReportFiles.length} test reports of `,
     )
     core.summary.addLink('the workflow run', testWorkflowRun.url)
     core.summary.addRaw('.')
