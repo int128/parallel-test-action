@@ -35,7 +35,10 @@ export const downloadTestReportsFromLastWorkflowRuns = async (
       lastWorkflowRun.id,
     )
     if (testReportFiles.length > 0) {
-      core.info(`Found the valid test reports at ${lastWorkflowRun.html_url}`)
+      core.info(`Found the valid test reports from ${lastWorkflowRun.html_url}:`)
+      for (const testReportFile of testReportFiles) {
+        core.info(`- ${testReportFile}`)
+      }
       return {
         url: lastWorkflowRun.html_url,
         testReportFiles,
