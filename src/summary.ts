@@ -11,7 +11,7 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
 
   core.summary.addTable([
     [
-      { data: 'Shard ID', header: true },
+      { data: 'Shard', header: true },
       { data: 'Test files', header: true },
       { data: 'Estimated test cases', header: true },
       { data: 'Estimated time (m:s)', header: true },
@@ -35,7 +35,7 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   core.summary.addHeading(`Total ${shardSet.workingTestFiles.length} test files`, 3)
   core.summary.addTable([
     [
-      { data: 'Shard ID', header: true },
+      { data: 'Shard', header: true },
       { data: 'Test file', header: true },
       { data: 'Estimated test cases', header: true },
       { data: 'Estimated time (m:s)', header: true },
@@ -62,9 +62,11 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   core.summary.addHeading('Test reports', 3)
   if (testWorkflowRun) {
     core.summary.addRaw('<p>')
-    core.summary.addRaw(`Downloaded ${testWorkflowRun.testReportFiles.length} test reports from `)
+    core.summary.addRaw(
+      `The estimated time of the test files is based on ${testWorkflowRun.testReportFiles.length} test reports of `,
+    )
     core.summary.addLink('the workflow run', testWorkflowRun.url)
-    core.summary.addRaw(' to estimate the time of the test files.')
+    core.summary.addRaw('.')
     core.summary.addRaw('</p>')
   } else {
     core.summary.addRaw('No test reports found in the last workflow runs.')
