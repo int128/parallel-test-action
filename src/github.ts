@@ -1,7 +1,5 @@
 import assert from 'assert'
-import * as fs from 'fs/promises'
 import { Octokit } from '@octokit/action'
-import { WebhookEvent } from '@octokit/webhooks-types'
 import { retry } from '@octokit/plugin-retry'
 
 export const getOctokit = () => new (Octokit.plugin(retry))()
@@ -13,16 +11,14 @@ export type Context = {
   }
   runnerTemp: string
   workflowRef: string
-  payload: WebhookEvent
 }
 
-export const getContext = async (): Promise<Context> => {
+export const getContext = (): Context => {
   // https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
   return {
     repo: getRepo(),
     runnerTemp: getEnv('RUNNER_TEMP'),
     workflowRef: getEnv('GITHUB_WORKFLOW_REF'),
-    payload: JSON.parse(await fs.readFile(getEnv('GITHUB_EVENT_PATH'), 'utf-8')) as WebhookEvent,
   }
 }
 

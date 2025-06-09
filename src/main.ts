@@ -14,7 +14,7 @@ const main = async (): Promise<void> => {
       token: core.getInput('token', { required: true }),
     },
     github.getOctokit(),
-    await github.getContext(),
+    github.getContext(),
   )
   await core.summary.write()
   core.setOutput('shards-directory', outputs.shardsDirectory)
