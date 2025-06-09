@@ -1,4 +1,3 @@
-import assert from 'assert'
 import * as core from '@actions/core'
 import * as fs from 'fs/promises'
 import * as glob from '@actions/glob'
@@ -47,7 +46,6 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   const testWorkflowRun = await downloadTestReportsFromLastWorkflowRuns(octokit, context, {
     testReportArtifactNamePrefix: inputs.testReportArtifactNamePrefix,
     testReportBranch: inputs.testReportBranch,
-    testReportWorkflowFilename: getWorkflowFilename(context),
     testReportDirectory,
     token: inputs.token,
   })
@@ -95,11 +93,4 @@ const globRelative = async (pattern: string) => {
   const files = await globber.glob()
   const cwd = process.cwd()
   return files.map((f) => path.relative(cwd, f))
-}
-
-const getWorkflowFilename = (context: Context) => {
-  const workflowRefMatcher = context.workflowRef.match(/([^/]+?)@/)
-  assert(workflowRefMatcher)
-  assert(workflowRefMatcher.length > 0)
-  return workflowRefMatcher[1]
 }

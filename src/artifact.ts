@@ -1,3 +1,4 @@
+import assert from 'assert'
 import * as core from '@actions/core'
 import * as glob from '@actions/glob'
 import * as path from 'path'
@@ -6,7 +7,6 @@ import { Context } from './github.js'
 import { Octokit } from '@octokit/action'
 
 type Inputs = {
-  testReportWorkflowFilename: string
   testReportArtifactNamePrefix: string
   testReportBranch: string
   testReportDirectory: string
@@ -43,11 +43,12 @@ export const downloadTestReportsFromLastWorkflowRuns = async (
 }
 
 const findLastWorkflowRuns = async (octokit: Octokit, context: Context, inputs: Inputs) => {
-  core.info(`Finding the last success workflow run on ${inputs.testReportBranch} branch`)
+  const workflowFilename = getWorkflowFilename(context)
+  core.info(`Finding the last success workflow run of ${workflowFilename} on ${inputs.testReportBranch} branch`)
   const { data: listWorkflowRuns } = await octokit.rest.actions.listWorkflowRuns({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    workflow_id: inputs.testReportWorkflowFilename,
+    workflow_id: workflowFilename,
     branch: inputs.testReportBranch,
     status: 'success',
     per_page: 1,
@@ -57,6 +58,13 @@ const findLastWorkflowRuns = async (octokit: Octokit, context: Context, inputs: 
     core.info(`- ${lastWorkflowRun.id} (${lastWorkflowRun.created_at}) ${lastWorkflowRun.html_url}`)
   }
   return listWorkflowRuns.workflow_runs
+}
+
+const getWorkflowFilename = (context: Context) => {
+  const workflowRefMatcher = context.workflowRef.match(/([^/]+?)@/)
+  assert(workflowRefMatcher)
+  assert(workflowRefMatcher.length > 0)
+  return workflowRefMatcher[1]
 }
 
 const downloadTestReportArtifacts = async (
