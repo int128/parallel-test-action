@@ -1,5 +1,6 @@
 import assert from 'assert'
 import * as core from '@actions/core'
+import * as fs from 'fs/promises'
 import * as glob from '@actions/glob'
 import * as path from 'path'
 import { ArtifactClient, DefaultArtifactClient } from '@actions/artifact'
@@ -23,40 +24,45 @@ export const downloadTestReportsFromLastWorkflowRuns = async (
   context: Context,
   inputs: Inputs,
 ): Promise<TestWorkflowRun | undefined> => {
-  const lastWorkflowRuns = await findLastWorkflowRuns(octokit, context, inputs)
-  if (lastWorkflowRuns.length === 0) {
-    return
-  }
-  const lastWorkflowRun = lastWorkflowRuns[0]
   const artifactClient = new DefaultArtifactClient()
-  const testReportFiles = await downloadTestReportArtifacts(
-    octokit,
-    context,
-    artifactClient,
-    inputs,
-    lastWorkflowRun.id,
-  )
-  return {
-    url: lastWorkflowRun.html_url,
-    testReportFiles,
+  const lastWorkflowRuns = await findLastWorkflowRuns(inputs.testReportBranch, octokit, context)
+  for (const lastWorkflowRun of lastWorkflowRuns) {
+    const testReportFiles = await downloadTestReportArtifacts(
+      octokit,
+      context,
+      artifactClient,
+      inputs,
+      lastWorkflowRun.id,
+    )
+    if (testReportFiles.length > 0) {
+      core.info(`Downloaded ${testReportFiles.length} test report files from ${lastWorkflowRun.html_url}`)
+      for (const testReportFile of testReportFiles) {
+        core.info(`- ${testReportFile}`)
+      }
+      return {
+        url: lastWorkflowRun.html_url,
+        testReportFiles,
+      }
+    }
   }
 }
 
-const findLastWorkflowRuns = async (octokit: Octokit, context: Context, inputs: Inputs) => {
+const findLastWorkflowRuns = async (branch: string, octokit: Octokit, context: Context) => {
   const workflowFilename = getWorkflowFilename(context)
-  core.info(`Finding the last success workflow run of ${workflowFilename} on ${inputs.testReportBranch} branch`)
+  core.info(`Finding the last success workflow runs of ${workflowFilename} on ${branch} branch`)
   const { data: listWorkflowRuns } = await octokit.rest.actions.listWorkflowRuns({
     owner: context.repo.owner,
     repo: context.repo.repo,
     workflow_id: workflowFilename,
-    branch: inputs.testReportBranch,
+    branch: branch,
     status: 'success',
-    per_page: 1,
+    per_page: 10,
   })
-  core.info(`Found ${listWorkflowRuns.workflow_runs.length} workflow run:`)
+  core.startGroup(`Found ${listWorkflowRuns.workflow_runs.length} workflow runs`)
   for (const lastWorkflowRun of listWorkflowRuns.workflow_runs) {
     core.info(`- ${lastWorkflowRun.id} (${lastWorkflowRun.created_at}) ${lastWorkflowRun.html_url}`)
   }
+  core.endGroup()
   return listWorkflowRuns.workflow_runs
 }
 
@@ -74,34 +80,28 @@ const downloadTestReportArtifacts = async (
   inputs: Inputs,
   workflowRunId: number,
 ) => {
-  core.info(`Finding the artifacts of the last workflow run`)
-  const listArtifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
+  core.info(`Finding the artifacts of the workflow run ${workflowRunId}`)
+  const workflowRunArtifacts = await octokit.paginate(octokit.rest.actions.listWorkflowRunArtifacts, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: workflowRunId,
     per_page: 100,
   })
-  core.info(`Found ${listArtifacts.length} artifacts:`)
-  for (const workflowRunArtifact of listArtifacts) {
-    const columns = [`${workflowRunArtifact.size_in_bytes} bytes`, workflowRunArtifact.created_at]
-    if (workflowRunArtifact.expired) {
-      columns.push('expired')
-    }
-    core.info(`- ${workflowRunArtifact.name} (${columns.join(', ')})`)
+  core.info(`Found ${workflowRunArtifacts.length} artifacts of the workflow run ${workflowRunId}`)
+
+  const testReportArtifacts = workflowRunArtifacts.filter(
+    (artifact) => !artifact.expired && artifact.name.startsWith(inputs.testReportArtifactNamePrefix),
+  )
+  core.info(`Found ${testReportArtifacts.length} test report artifacts:`)
+  for (const artifact of testReportArtifacts) {
+    core.info(`- ${artifact.name} (${artifact.size_in_bytes} bytes, ${artifact.created_at})`)
   }
 
-  const testReportArtifacts = listArtifacts.filter((workflowRunArtifact) => {
-    if (workflowRunArtifact.expired) {
-      return false
-    }
-    return workflowRunArtifact.name.startsWith(inputs.testReportArtifactNamePrefix)
-  })
-  core.info(`Filtered ${testReportArtifacts.length} artifacts of the test reports`)
-
-  for (const testReportArtifact of testReportArtifacts) {
-    await core.group(`Downloading the artifact: ${testReportArtifact.name}`, () =>
-      artifactClient.downloadArtifact(testReportArtifact.id, {
-        path: path.join(inputs.testReportDirectory, `${workflowRunId}`, testReportArtifact.name),
+  await fs.rm(inputs.testReportDirectory, { recursive: true, force: true })
+  for (const artifact of testReportArtifacts) {
+    await core.group(`Downloading the artifact ${artifact.name} from the workflow run ${workflowRunId}`, () =>
+      artifactClient.downloadArtifact(artifact.id, {
+        path: path.join(inputs.testReportDirectory, `${workflowRunId}`, artifact.name),
         findBy: {
           workflowRunId: workflowRunId,
           repositoryOwner: context.repo.owner,
