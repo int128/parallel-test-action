@@ -5,24 +5,8 @@ import { TestWorkflowRun } from './artifact.js'
 export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRun | undefined) => {
   core.summary.addHeading('Summary of parallel-test-action', 2)
 
-  core.summary.addHeading('Input: Test files', 3)
-  core.summary.addRaw(`Found ${shardSet.workingTestFiles.length} test files in the working directory.`)
-
-  core.summary.addHeading('Input: Test reports', 3)
-  if (testWorkflowRun) {
-    core.summary.addRaw('<p>')
-    core.summary.addRaw(`Downloaded ${testWorkflowRun.testReportFiles.length} test reports from `)
-    core.summary.addLink('the last success workflow run', testWorkflowRun.url)
-    core.summary.addRaw(' to estimate the time of the test files.')
-    core.summary.addRaw('</p>')
-    core.summary.addList(testWorkflowRun.testReportFiles)
-  } else {
-    core.summary.addRaw('No test reports found in the last success workflow run.')
-  }
-
-  core.summary.addHeading('Output: Test shards', 3)
   core.summary.addRaw('<p>')
-  core.summary.addRaw(`Tests are distributed across ${shardSet.shards.length} parallel shards.`)
+  core.summary.addRaw(`Distributed ${shardSet.workingTestFiles.length} test files to ${shardSet.shards.length} shards.`)
   core.summary.addRaw('</p>')
 
   core.summary.addTable([
@@ -47,7 +31,8 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
   ])
 
   core.summary.addRaw('<details>')
-  core.summary.addRaw(`<summary>Details of ${shardSet.workingTestFiles.length} test files</summary>`)
+  core.summary.addRaw(`<summary>📝 See the details of ${shardSet.workingTestFiles.length} test files</summary>`)
+  core.summary.addHeading(`Total ${shardSet.workingTestFiles.length} test files`, 3)
   core.summary.addTable([
     [
       { data: 'Shard ID', header: true },
@@ -73,6 +58,17 @@ export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRu
     true,
   )
   core.summary.addRaw('</details>')
+
+  core.summary.addHeading('Test reports', 3)
+  if (testWorkflowRun) {
+    core.summary.addRaw('<p>')
+    core.summary.addRaw(`Downloaded ${testWorkflowRun.testReportFiles.length} test reports from `)
+    core.summary.addLink('the workflow run', testWorkflowRun.url)
+    core.summary.addRaw(' to estimate the time of the test files.')
+    core.summary.addRaw('</p>')
+  } else {
+    core.summary.addRaw('No test reports found in the last workflow runs.')
+  }
 }
 
 export const formatTimeInMinSec = (seconds: number): string => {
