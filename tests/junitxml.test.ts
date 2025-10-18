@@ -1,14 +1,12 @@
-import { describe } from 'vitest'
-import { it } from 'vitest'
-import { expect } from 'vitest'
-import * as fs from 'fs/promises'
-import * as path from 'path'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
+import { describe, expect, it } from 'vitest'
 import {
   findTestCasesFromJunitXml,
   groupTestCasesByTestFile,
   parseJunitXml,
   parseTestReportFiles,
-  TestCase,
+  type TestCase,
 } from '../src/junitxml.js'
 
 describe('parseTestReportFiles', () => {

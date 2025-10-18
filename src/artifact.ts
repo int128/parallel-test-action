@@ -1,11 +1,11 @@
-import assert from 'assert'
+import assert from 'node:assert'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
+import { type ArtifactClient, DefaultArtifactClient } from '@actions/artifact'
 import * as core from '@actions/core'
-import * as fs from 'fs/promises'
 import * as glob from '@actions/glob'
-import * as path from 'path'
-import { ArtifactClient, DefaultArtifactClient } from '@actions/artifact'
-import { Context } from './github.js'
-import { Octokit } from '@octokit/action'
+import type { Octokit } from '@octokit/action'
+import type { Context } from './github.js'
 
 type Inputs = {
   testReportArtifactNamePrefix: string

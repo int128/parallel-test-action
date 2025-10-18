@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
-import { ShardSet } from './shard.js'
-import { TestWorkflowRun } from './artifact.js'
+import type { TestWorkflowRun } from './artifact.js'
+import type { ShardSet } from './shard.js'
 
 export const writeSummary = (shardSet: ShardSet, testWorkflowRun: TestWorkflowRun | undefined) => {
   core.summary.addHeading('Summary of parallel-test-action', 2)
