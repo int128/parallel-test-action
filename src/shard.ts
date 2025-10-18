@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { ArtifactNotFoundError, DefaultArtifactClient } from '@actions/artifact'
+import { ArtifactNotFoundError, DefaultArtifactClient, type GetArtifactResponse } from '@actions/artifact'
 import * as core from '@actions/core'
 
 type ReportedTestFile = {
@@ -109,7 +109,7 @@ const averageOf = (a: number[]) => {
 
 export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, shardsArtifactName: string) => {
   const artifactClient = new DefaultArtifactClient()
-  let existingArtifact
+  let existingArtifact: GetArtifactResponse
   try {
     existingArtifact = await artifactClient.getArtifact(shardsArtifactName)
   } catch (e) {
