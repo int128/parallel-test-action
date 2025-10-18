@@ -1,18 +1,18 @@
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import * as core from '@actions/core'
-import * as fs from 'fs/promises'
 import * as glob from '@actions/glob'
-import * as path from 'path'
-import { Context } from './github.js'
-import { Octokit } from '@octokit/action'
+import type { Octokit } from '@octokit/action'
 import { downloadTestReportsFromLastWorkflowRuns } from './artifact.js'
+import type { Context } from './github.js'
 import { parseTestReportFiles } from './junitxml.js'
-import { writeSummary } from './summary.js'
 import {
-  tryDownloadShardsIfAlreadyExists,
   distributeTestFilesToShards,
-  writeShardsWithLock,
+  tryDownloadShardsIfAlreadyExists,
   verifyTestFiles,
+  writeShardsWithLock,
 } from './shard.js'
+import { writeSummary } from './summary.js'
 
 type Inputs = {
   workingDirectory: string

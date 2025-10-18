@@ -1,7 +1,7 @@
-import assert from 'assert'
+import assert from 'node:assert'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import * as core from '@actions/core'
-import * as fs from 'fs/promises'
-import * as path from 'path'
 import { XMLParser } from 'fast-xml-parser'
 
 type TestFile = {
