@@ -24,8 +24,8 @@ importers:
         specifier: 8.0.3
         version: 8.0.3(@octokit/core@7.0.6)
       fast-xml-parser:
-        specifier: 5.3.0
-        version: 5.3.0
+        specifier: 5.3.1
+        version: 5.3.1
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.4
@@ -794,8 +794,8 @@ packages:
     resolution: {integrity: sha512-RKihhV+SHsIUGXObeVy9AXiBbFwkVk7Syp8XgwN5U3JV416+Gwp/GO9i0JYKmikykgz/UHRrrV4ROuZEo/T0ig==}
     hasBin: true
 
-  fast-xml-parser@5.3.0:
-    resolution: {integrity: sha512-gkWGshjYcQCF+6qtlrqBqELqNqnt4CxruY6UVAWWnqb3DQ6qaNFEIKqzYep1XzHLM/QtrHVCxyPOtTk4LTQ7Aw==}
+  fast-xml-parser@5.3.1:
+    resolution: {integrity: sha512-jbNkWiv2Ec1A7wuuxk0br0d0aTMUtQ4IkL+l/i1r9PRf6pLXjDgsBsWwO+UyczmQlnehi4Tbc8/KIvxGQe+I/A==}
     hasBin: true
 
   fdir@6.4.4:
@@ -1983,7 +1983,7 @@ snapshots:
     dependencies:
       strnum: 1.1.1
 
-  fast-xml-parser@5.3.0:
+  fast-xml-parser@5.3.1:
     dependencies:
       strnum: 2.1.0
 
