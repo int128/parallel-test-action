@@ -71,7 +71,7 @@ jobs:
           test-files: "tests/**/*.test.ts"
           test-report-artifact-name-prefix: test-report-
           test-report-branch: main
-          shard-count: 3
+          shard-count: ${{ strategy.job-total }}
       - uses: actions/setup-node@v4
       # ...snip...
       - run: xargs pnpm run test -- < "$SHARD_FILE"
@@ -107,7 +107,7 @@ jobs:
           test-files: "spec/**/*_spec.rb"
           test-report-artifact-name-prefix: test-report-
           test-report-branch: main
-          shard-count: 3
+          shard-count: ${{ strategy.job-total }}
       - uses: ruby/setup-ruby@v1
       # ...snip...
       - run: xargs bundle exec rspec --format RspecJunitFormatter --out rspec.xml < "$SHARD_FILE"
@@ -220,7 +220,7 @@ jobs:
           test-files: "**/*" # Glob pattern of your test files
           test-report-artifact-name-prefix: test-report- # Find the test reports of this name
           test-report-branch: main # Find the test reports from the main branch
-          shard-count: 3
+          shard-count: ${{ strategy.job-total }}
 
       # (3) Run your testing framework.
       - run: xargs your-testing-framework < "$SHARD_FILE"
