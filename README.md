@@ -51,9 +51,9 @@ If no test report is given, this action falls back to the round-robin distributi
 
 ## Examples
 
-### Jest
+### Vitest or Jest
 
-Here is an example workflow to run Jest in parallel.
+Here is an example workflow to run Vitest or Jest in parallel.
 
 ```yaml
 jobs:
@@ -68,7 +68,7 @@ jobs:
       - uses: int128/parallel-test-action@v1
         id: parallel-test
         with:
-          test-files: 'tests/**/*.test.ts'
+          test-files: "tests/**/*.test.ts"
           test-report-artifact-name-prefix: test-report-
           test-report-branch: main
           shard-count: 3
@@ -83,9 +83,9 @@ jobs:
           path: junit.xml
 ```
 
-You can generate a test report using [jest-junit](https://github.com/jest-community/jest-junit).
 This action requires `file` attribute of the test report.
-See [jest.config.js](jest.config.js) for example.
+For Vitest, see [vitest.config.ts](vitest.config.ts) for the configuration to generate the test report.
+For Jest, you can use [jest-junit](https://github.com/jest-community/jest-junit).
 
 ### RSpec
 
@@ -104,7 +104,7 @@ jobs:
       - uses: int128/parallel-test-action@v1
         id: parallel-test
         with:
-          test-files: 'spec/**/*_spec.rb'
+          test-files: "spec/**/*_spec.rb"
           test-report-artifact-name-prefix: test-report-
           test-report-branch: main
           shard-count: 3
@@ -217,7 +217,7 @@ jobs:
       - uses: int128/parallel-test-action@v1
         id: parallel-test
         with:
-          test-files: '**/*' # Glob pattern of your test files
+          test-files: "**/*" # Glob pattern of your test files
           test-report-artifact-name-prefix: test-report- # Find the test reports of this name
           test-report-branch: main # Find the test reports from the main branch
           shard-count: 3
