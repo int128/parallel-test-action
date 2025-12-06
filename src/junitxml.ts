@@ -43,12 +43,7 @@ export type TestCase = {
 }
 
 export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
-  const rootTestSuites: JunitXmlTestSuite[] = (() => {
-    if (junitXml.testsuites !== undefined && 'testsuite' in junitXml.testsuites) {
-      return junitXml.testsuites.testsuite ?? []
-    }
-    return junitXml.testsuite ?? []
-  })()
+  const rootTestSuites: JunitXmlTestSuite[] = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
 
   function* visit(testSuite: JunitXmlTestSuite): Generator<TestCase> {
     const determineTestCaseFilename = (junitXmlTestCase: JunitXmlTestCase): string => {
@@ -115,7 +110,11 @@ const JunitXmlTestSuite = z.object({
 type JunitXmlTestSuite = z.infer<typeof JunitXmlTestSuite>
 
 const JunitXml = z.object({
-  testsuites: z.union([z.array(JunitXmlTestSuite), JunitXmlTestSuite]).optional(),
+  testsuites: z
+    .object({
+      testsuite: z.array(JunitXmlTestSuite).optional(),
+    })
+    .optional(),
   testsuite: z.array(JunitXmlTestSuite).optional(),
 })
 
