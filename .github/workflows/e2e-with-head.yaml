@@ -36,7 +36,7 @@ jobs:
           test-files: 'tests/**/*.test.ts'
           test-report-branch: ${{ github.event.pull_request.head.ref }}
           test-report-artifact-name-prefix: test-report-
-          shard-count: 2
+          shard-count: ${{ strategy.job-total }}
       - run: cat "$SHARD_FILE"
         env:
           SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
