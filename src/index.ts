@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import * as github from './github.js'
 import { run } from './run.js'
 
-const main = async (): Promise<void> => {
+const main = async () => {
   const outputs = await run(
     {
       workingDirectory: core.getInput('working-directory', { required: true }),
@@ -20,7 +20,9 @@ const main = async (): Promise<void> => {
   core.setOutput('shards-directory', outputs.shardsDirectory)
 }
 
-main().catch((e: Error) => {
-  core.setFailed(e)
+try {
+  await main()
+} catch (e) {
+  core.setFailed(e instanceof Error ? e : String(e))
   console.error(e)
-})
+}
