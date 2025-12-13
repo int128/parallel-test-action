@@ -33,6 +33,7 @@ jobs:
       - run: npm install -g pnpm@latest-10
       - run: pnpm i
       - run: pnpm run test
+      - run: pnpm run build
 
   generate:
     runs-on: ubuntu-latest
