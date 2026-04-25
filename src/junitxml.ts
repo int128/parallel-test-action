@@ -1,3 +1,4 @@
+import assert from 'node:assert'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as core from '@actions/core'
@@ -127,12 +128,11 @@ export const parseJunitXml = (xml: string | Buffer): JunitXml => {
     },
     ignoreAttributes: false,
     removeNSPrefix: true,
-    isArray: (_: string, jPath: string): boolean => {
-      const elementName = jPath.split('.').pop()
-      return elementName === 'testsuite' || elementName === 'testcase'
-    },
-    attributeValueProcessor: (attrName: string, attrValue: string, jPath: string) => {
-      const elementName = jPath.split('.').pop()
+    jPath: false,
+    isArray: (tagName) => tagName === 'testsuite' || tagName === 'testcase',
+    attributeValueProcessor: (attrName, attrValue, jPathOrMatcher) => {
+      assert(typeof jPathOrMatcher === 'object', 'jPathOrMatcher must be an object')
+      const elementName = jPathOrMatcher.getCurrentTag()
       if (
         (elementName === 'testsuites' || elementName === 'testsuite' || elementName === 'testcase') &&
         attrName === 'time'
