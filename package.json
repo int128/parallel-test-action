@@ -13,7 +13,7 @@
     "@octokit/action": "8.0.4",
     "@octokit/plugin-retry": "8.1.0",
     "fast-xml-parser": "5.7.2",
-    "zod": "4.3.6"
+    "zod": "4.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.13",
