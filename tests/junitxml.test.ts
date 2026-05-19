@@ -78,6 +78,21 @@ describe('findTestCasesFromJunitXml', () => {
     ])
   })
 
+  it('should return node test root test cases', () => {
+    const junitXml = parseJunitXml(`<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testcase name="test1" time="1" classname="test" file="src/a.test.ts"/>
+  <testcase name="test2" time="2" classname="test" file="./src/b.test.ts"/>
+  <testcase name="test3" time="3" classname="test" file="src/a.test.ts"/>
+</testsuites>`)
+
+    expect(findTestCasesFromJunitXml(junitXml)).toEqual<TestCase[]>([
+      { filename: 'src/a.test.ts', time: 1 },
+      { filename: 'src/b.test.ts', time: 2 },
+      { filename: 'src/a.test.ts', time: 3 },
+    ])
+  })
+
   it('should return test cases', () => {
     const junitXml = {
       testsuite: [
