@@ -41,6 +41,43 @@ describe('parseJunitXml', () => {
 })
 
 describe('findTestCasesFromJunitXml', () => {
+  it('should return test cases from a testsuites element', () => {
+    const junitXml = {
+      testsuites: {
+        testsuite: [
+          {
+            testcase: [
+              { '@_name': 'test1', '@_time': 1, '@_file': 'file1' },
+              { '@_name': 'test2', '@_time': 2, '@_file': 'file2' },
+            ],
+          },
+        ],
+      },
+    }
+    expect(findTestCasesFromJunitXml(junitXml)).toEqual<TestCase[]>([
+      { filename: 'file1', time: 1 },
+      { filename: 'file2', time: 2 },
+    ])
+  })
+
+  it('should use the root suite file when test cases do not have file attributes', () => {
+    const junitXml = {
+      testsuite: [
+        {
+          '@_file': 'spec/root_spec.rb',
+          testcase: [
+            { '@_name': 'test1', '@_time': 1 },
+            { '@_name': 'test2', '@_time': 2 },
+          ],
+        },
+      ],
+    }
+    expect(findTestCasesFromJunitXml(junitXml)).toEqual<TestCase[]>([
+      { filename: 'spec/root_spec.rb', time: 1 },
+      { filename: 'spec/root_spec.rb', time: 2 },
+    ])
+  })
+
   it('should return test cases', () => {
     const junitXml = {
       testsuite: [
