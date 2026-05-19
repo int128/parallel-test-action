@@ -45,32 +45,35 @@ export type TestCase = {
 
 export const findTestCasesFromJunitXml = (junitXml: JunitXml): TestCase[] => {
   const rootTestSuites: JunitXmlTestSuite[] = junitXml.testsuites?.testsuite ?? junitXml.testsuite ?? []
+  const rootTestCases: JunitXmlTestCase[] = junitXml.testsuites?.testcase ?? []
+
+  const determineTestCaseFilename = (junitXmlTestCase: JunitXmlTestCase): string => {
+    if (junitXmlTestCase['@_file']) {
+      return junitXmlTestCase['@_file']
+    }
+    // For Mocha or Cypress, the first <testsuite> element has the filename of the root suite.
+    const mochaRootSuiteFilename = rootTestSuites.at(0)?.['@_file']
+    if (mochaRootSuiteFilename) {
+      return mochaRootSuiteFilename
+    }
+    throw new Error(`Element <testcase> must have "file" attribute (name=${junitXmlTestCase['@_name']})`)
+  }
+
+  const toTestCase = (junitXmlTestCase: JunitXmlTestCase): TestCase => ({
+    filename: path.normalize(determineTestCaseFilename(junitXmlTestCase)),
+    time: junitXmlTestCase['@_time'],
+  })
 
   function* visit(testSuite: JunitXmlTestSuite): Generator<TestCase> {
-    const determineTestCaseFilename = (junitXmlTestCase: JunitXmlTestCase): string => {
-      if (junitXmlTestCase['@_file']) {
-        return junitXmlTestCase['@_file']
-      }
-      // For Mocha or Cypress, the first <testsuite> element has the filename of the root suite.
-      const mochaRootSuiteFilename = rootTestSuites.at(0)?.['@_file']
-      if (mochaRootSuiteFilename) {
-        return mochaRootSuiteFilename
-      }
-      throw new Error(`Element <testcase> must have "file" attribute (name=${junitXmlTestCase['@_name']})`)
-    }
-
     for (const junitXmlTestCase of testSuite.testcase ?? []) {
-      yield {
-        filename: path.normalize(determineTestCaseFilename(junitXmlTestCase)),
-        time: junitXmlTestCase['@_time'],
-      }
+      yield toTestCase(junitXmlTestCase)
     }
     for (const nestedTestSuite of testSuite.testsuite ?? []) {
       visit(nestedTestSuite)
     }
   }
 
-  const testCases: TestCase[] = []
+  const testCases: TestCase[] = rootTestCases.map(toTestCase)
   for (const testSuite of rootTestSuites) {
     for (const testCase of visit(testSuite)) {
       testCases.push(testCase)
@@ -114,6 +117,7 @@ const JunitXml = z.object({
   testsuites: z
     .object({
       testsuite: z.array(JunitXmlTestSuite).optional(),
+      testcase: z.array(JunitXmlTestCase).optional(),
     })
     .optional(),
   testsuite: z.array(JunitXmlTestSuite).optional(),
