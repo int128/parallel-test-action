@@ -22,6 +22,10 @@ inputs:
     description: Name of the shards artifact
     required: true
     default: parallel-test-shards--${{ github.job }}
+  enable-summary:
+    description: (Internal) Whether to write the workflow run summary
+    required: false
+    default: ${{ strategy.job-index == 0 }}
   token:
     description: GitHub token
     required: true

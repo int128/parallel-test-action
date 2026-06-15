@@ -11,6 +11,7 @@ const main = async () => {
       testReportBranch: core.getInput('test-report-branch', { required: true }),
       shardCount: parseInt(core.getInput('shard-count', { required: true }), 10),
       shardsArtifactName: core.getInput('shards-artifact-name', { required: true }),
+      enableSummary: core.getBooleanInput('enable-summary', { required: true }),
       token: core.getInput('token', { required: true }),
     },
     github.getOctokit(),

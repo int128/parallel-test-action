@@ -125,15 +125,7 @@ export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, 
   return true
 }
 
-type Lock = {
-  currentJobAcquiredLock: boolean
-}
-
-export const writeShardsWithLock = async (
-  shards: Shard[],
-  shardsDirectory: string,
-  shardsArtifactName: string,
-): Promise<Lock> => {
+export const writeShardsWithLock = async (shards: Shard[], shardsDirectory: string, shardsArtifactName: string) => {
   const artifactClient = new DefaultArtifactClient()
 
   core.info(`Acquiring a lock of shards artifact`)
@@ -145,7 +137,7 @@ export const writeShardsWithLock = async (
   )
   if (!conflictError) {
     core.info(`This job successfully uploaded the shards. Others will download the shards.`)
-    return { currentJobAcquiredLock: true }
+    return
   }
 
   core.info(`Another job already uploaded the shards: ${conflictError}`)
@@ -156,7 +148,6 @@ export const writeShardsWithLock = async (
   await core.group(`Downloading the artifact: ${shardsArtifactName}`, () =>
     artifactClient.downloadArtifact(existingArtifact.artifact.id, { path: shardsDirectory }),
   )
-  return { currentJobAcquiredLock: false }
 }
 
 const catchHttp409ConflictError = async (f: () => Promise<void>): Promise<undefined | Error> => {

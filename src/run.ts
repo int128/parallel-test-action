@@ -21,6 +21,7 @@ type Inputs = {
   testReportBranch: string
   shardCount: number
   shardsArtifactName: string
+  enableSummary: boolean
   token: string // downloadArtifact() of @actions/artifact requires a token
 }
 
@@ -53,11 +54,10 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
 
   const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, inputs.shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)
-
-  const shardsLock = await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
-  if (shardsLock.currentJobAcquiredLock) {
+  if (inputs.enableSummary) {
     writeSummary(shardSet, testWorkflowRun)
   }
+  await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
 
   await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
   return { shardsDirectory }
