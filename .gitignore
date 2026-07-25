@@ -98,7 +98,7 @@ Thumbs.db
 lib/
 
 # Only release tag contains dist directory
-/dist
+
 
 # Test report
 junit.xml
