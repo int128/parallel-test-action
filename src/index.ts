@@ -42,7 +42,7 @@ const getFloatInput = (name: string): number | undefined => {
     return
   }
   const n = Number.parseFloat(s)
-  if (Number.isSafeInteger(n)) {
+  if (Number.isFinite(n)) {
     return n
   }
   throw new Error(`Input ${name} must be a valid float`)
