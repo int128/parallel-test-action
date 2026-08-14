@@ -17,7 +17,10 @@ inputs:
     required: true
   shard-count:
     description: Number of shards
-    required: true
+    required: false
+  max-shard-time-seconds:
+    description: Maximum time of a shard
+    required: false
   shards-artifact-name:
     description: Name of the shards artifact
     required: true
@@ -34,6 +37,10 @@ inputs:
 outputs:
   shards-directory:
     description: Directory to store the shard files
+  shards-artifact-name:
+    description: Name of the shards artifact
+  shards-json:
+    description: JSON array of the shards
 
 runs:
   using: 'node24'

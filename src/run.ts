@@ -7,6 +7,7 @@ import { downloadTestReportsFromLastWorkflowRuns } from './artifact.js'
 import type { Context } from './github.js'
 import { parseTestReportFiles } from './junitxml.js'
 import {
+  calculateShardCount,
   distributeTestFilesToShards,
   tryDownloadShardsIfAlreadyExists,
   verifyTestFiles,
@@ -19,7 +20,8 @@ type Inputs = {
   testFiles: string
   testReportArtifactNamePrefix: string
   testReportBranch: string
-  shardCount: number
+  shardCount: number | undefined
+  maxShardTime: number | undefined
   shardsArtifactName: string
   enableSummary: boolean
   token: string // downloadArtifact() of @actions/artifact requires a token
@@ -27,6 +29,8 @@ type Inputs = {
 
 type Outputs = {
   shardsDirectory: string
+  shardsArtifactName: string
+  shardsJson: { id: number }[]
 }
 
 export const run = async (inputs: Inputs, octokit: Octokit, context: Context): Promise<Outputs> => {
@@ -40,7 +44,11 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   // Since multiple jobs run in parallel, another job may have already uploaded the shards.
   if (await tryDownloadShardsIfAlreadyExists(shardsDirectory, inputs.shardsArtifactName)) {
     await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
-    return { shardsDirectory }
+    return {
+      shardsDirectory,
+      shardsArtifactName: inputs.shardsArtifactName,
+      shardsJson: await generateShardsJson(shardsDirectory),
+    }
   }
 
   const testReportDirectory = path.join(tempDirectory, 'test-reports')
@@ -52,7 +60,16 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   })
   const testFiles = await parseTestReportFiles(testWorkflowRun?.testReportFiles ?? [])
 
-  const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, inputs.shardCount)
+  let shardCount: number
+  if (inputs.shardCount !== undefined) {
+    shardCount = inputs.shardCount
+  } else if (inputs.maxShardTime !== undefined) {
+    shardCount = calculateShardCount(testFiles, inputs.maxShardTime)
+  } else {
+    throw new Error('Either shard-count or max-shard-time-seconds must be set')
+  }
+
+  const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, shardCount)
   core.info(`Generated ${shardSet.shards.length} shards`)
   if (inputs.enableSummary) {
     writeSummary(shardSet, testWorkflowRun)
@@ -60,7 +77,11 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   await writeShardsWithLock(shardSet.shards, shardsDirectory, inputs.shardsArtifactName)
 
   await ensureTestFilesConsistency(shardsDirectory, workingTestFilenames)
-  return { shardsDirectory }
+  return {
+    shardsDirectory,
+    shardsArtifactName: inputs.shardsArtifactName,
+    shardsJson: await generateShardsJson(shardsDirectory),
+  }
 }
 
 const ensureTestFilesConsistency = async (shardsDirectory: string, workingTestFilenames: string[]) => {
@@ -81,6 +102,11 @@ const ensureTestFilesConsistency = async (shardsDirectory: string, workingTestFi
     )
   }
   core.info(`Verified the consistency of the test files`)
+}
+
+const generateShardsJson = async (shardsDirectory: string) => {
+  const shardFiles = await globShardFiles(shardsDirectory)
+  return shardFiles.map((f) => ({ id: Number.parseInt(path.basename(f), 10) }))
 }
 
 const globShardFiles = async (shardsDirectory: string) => {

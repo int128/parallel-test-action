@@ -11,12 +11,12 @@ on:
       - .github/workflows/e2e-with-head.yaml
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        shard-id: [1, 2]
+  split:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      shards-artifact-name: ${{ steps.parallel-test.outputs.shards-artifact-name }}
+      shards-json: ${{ steps.parallel-test.outputs.shards-json }}
     permissions:
       actions: read
       contents: read
@@ -36,15 +36,38 @@ jobs:
           test-files: 'tests/**/*.test.ts'
           test-report-branch: ${{ github.event.pull_request.head.ref }}
           test-report-artifact-name-prefix: test-report-
-          shard-count: ${{ strategy.job-total }}
+          max-shard-time-seconds: 0.1
+
+  test:
+    needs: split
+    strategy:
+      matrix:
+        shard: ${{ fromJson(needs.split.outputs.shards-json) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - run: npm install -g corepack
+      - run: corepack enable
+      - run: pnpm i
+      - id: download-shards
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.split.outputs.shards-artifact-name }}
+          path: ${{ runner.temp }}/shards
       - run: cat "$SHARD_FILE"
         env:
-          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
+          SHARD_FILE: ${{ steps.download-shards.outputs.download-path }}/${{ matrix.shard.id }}
       - run: xargs pnpm run test < "$SHARD_FILE"
         env:
-          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
+          SHARD_FILE: ${{ steps.download-shards.outputs.download-path }}/${{ matrix.shard.id }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: test-report-${{ matrix.shard-id }}
+          name: test-report-${{ matrix.shard.id }}
           path: junit.xml
           if-no-files-found: error

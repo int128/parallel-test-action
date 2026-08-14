@@ -121,6 +121,48 @@ jobs:
 
 You can generate a test report using [rspec_junit_formatter](https://github.com/sj26/rspec_junit_formatter).
 
+### Autoscaling
+
+```yaml
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    outputs:
+      shards-artifact-name: ${{ steps.parallel-test.outputs.shards-artifact-name }}
+      shards-json: ${{ steps.parallel-test.outputs.shards-json }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: int128/parallel-test-action@v1
+        id: parallel-test
+        with:
+          test-files: "tests/**/*.test.ts"
+          test-report-artifact-name-prefix: test-report-
+          test-report-branch: main
+          max-shard-time-seconds: 300 # 5 minutes
+
+  test:
+    needs: split
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.split.outputs.shards-json) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      # ...snip...
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.split.outputs.shards-artifact-name }}
+      - run: xargs pnpm run test -- < "$SHARD_FILE"
+        env:
+          SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard.id }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.shard-id }}
+          path: junit.xml
+```
+
 ## How it works
 
 ### Action overview
@@ -254,7 +296,8 @@ Steps:
 | `test-files`                       | (required)     | Glob pattern of test files               |
 | `test-report-artifact-name-prefix` | (required)     | Prefix of the test report artifact name  |
 | `test-report-branch`               | (required)     | Branch to find the test report artifacts |
-| `shard-count`                      | (required)     | Number of shards                         |
+| `shard-count`                      | -              | Number of shards                         |
+| `max-shard-time-seconds`           | -              | Maximum time of a shard                  |
 | `shards-artifact-name`             | (\*1)          | Name of the shards artifact              |
 | `token`                            | (github.token) | GitHub token                             |
 
@@ -264,9 +307,11 @@ For above example, the shards artifact is uploaded as `parallel-test-shards--tes
 
 ### Outputs
 
-| Name               | Description                        |
-| ------------------ | ---------------------------------- |
-| `shards-directory` | Directory to store the shard files |
+| Name                   | Description                        |
+| ---------------------- | ---------------------------------- |
+| `shards-directory`     | Directory to store the shard files |
+| `shards-artifact-name` | Name of the shards artifact        |
+| `shards-json`          | JSON array of the shards           |
 
 This action writes the shard files to the temporary directory.
 The shards directory looks like:
