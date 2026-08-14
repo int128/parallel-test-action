@@ -21,6 +21,7 @@ type Inputs = {
   testReportArtifactNamePrefix: string
   testReportBranch: string
   shardCount: number | undefined
+  maxShardCount: number | undefined
   maxShardTime: number | undefined
   shardsArtifactName: string
   enableSummary: boolean
@@ -63,8 +64,8 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   let shardCount: number
   if (inputs.shardCount !== undefined) {
     shardCount = inputs.shardCount
-  } else if (inputs.maxShardTime !== undefined) {
-    shardCount = calculateShardCount(testFiles, inputs.maxShardTime)
+  } else if (inputs.maxShardCount !== undefined && inputs.maxShardTime !== undefined) {
+    shardCount = calculateShardCount(testFiles, inputs.maxShardCount, inputs.maxShardTime)
   } else {
     throw new Error('Either shard-count or max-shard-time-seconds must be set')
   }

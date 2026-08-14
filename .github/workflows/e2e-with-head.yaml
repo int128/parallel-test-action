@@ -36,6 +36,7 @@ jobs:
           test-files: 'tests/**/*.test.ts'
           test-report-branch: ${{ github.event.pull_request.head.ref }}
           test-report-artifact-name-prefix: test-report-
+          max-shard-count: 3
           max-shard-time-seconds: 0.1
 
   test:

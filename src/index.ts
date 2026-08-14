@@ -10,6 +10,7 @@ const main = async () => {
       testReportArtifactNamePrefix: core.getInput('test-report-artifact-name-prefix', { required: true }),
       testReportBranch: core.getInput('test-report-branch', { required: true }),
       shardCount: getIntegerInput('shard-count'),
+      maxShardCount: getIntegerInput('max-shard-count'),
       maxShardTime: getFloatInput('max-shard-time-seconds'),
       shardsArtifactName: core.getInput('shards-artifact-name', { required: true }),
       enableSummary: core.getBooleanInput('enable-summary', { required: true }),

@@ -78,8 +78,15 @@ const byTotalTimeOrCountAscending = <E extends Shard>(a: E, b: E) => {
 
 const byId = <E extends { id: number }>(a: E, b: E) => a.id - b.id
 
-export const calculateShardCount = (reportedTestFiles: ReportedTestFile[], maxShardTime: number): number => {
+export const calculateShardCount = (
+  reportedTestFiles: ReportedTestFile[],
+  maxShardCount: number,
+  maxShardTime: number,
+): number => {
   const totalTime = sumArray(reportedTestFiles.map((f) => f.totalTime))
+  if (totalTime === 0) {
+    return maxShardCount
+  }
   return Math.ceil(totalTime / maxShardTime)
 }
 
