@@ -7,7 +7,7 @@ import { downloadTestReportsFromLastWorkflowRuns } from './artifact.js'
 import type { Context } from './github.js'
 import { parseTestReportFiles } from './junitxml.js'
 import {
-  calculateShardCount,
+  DistributeStrategy,
   distributeTestFilesToShards,
   tryDownloadShardsIfAlreadyExists,
   verifyTestFiles,
@@ -21,8 +21,8 @@ type Inputs = {
   testReportArtifactNamePrefix: string
   testReportBranch: string
   shardCount: number | undefined
+  averageShardTime: number | undefined
   maxShardCount: number | undefined
-  maxShardTime: number | undefined
   shardsArtifactName: string
   enableSummary: boolean
   token: string // downloadArtifact() of @actions/artifact requires a token
@@ -61,16 +61,7 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
   })
   const testFiles = await parseTestReportFiles(testWorkflowRun?.testReportFiles ?? [])
 
-  let shardCount: number
-  if (inputs.shardCount !== undefined) {
-    shardCount = inputs.shardCount
-  } else if (inputs.maxShardCount !== undefined && inputs.maxShardTime !== undefined) {
-    shardCount = calculateShardCount(testFiles, inputs.maxShardCount, inputs.maxShardTime)
-  } else {
-    throw new Error('Either shard-count or max-shard-time-seconds must be set')
-  }
-
-  const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, shardCount)
+  const shardSet = distributeTestFilesToShards(workingTestFilenames, testFiles, getDistributeStrategy(inputs))
   core.info(`Generated ${shardSet.shards.length} shards`)
   if (inputs.enableSummary) {
     writeSummary(shardSet, testWorkflowRun)
@@ -83,6 +74,21 @@ export const run = async (inputs: Inputs, octokit: Octokit, context: Context): P
     shardsArtifactName: inputs.shardsArtifactName,
     shardsJson: await generateShardsJson(shardsDirectory),
   }
+}
+
+const getDistributeStrategy = (inputs: Inputs): DistributeStrategy => {
+  if (inputs.shardCount !== undefined) {
+    return {
+      shardCount: inputs.shardCount,
+    }
+  }
+  if (inputs.averageShardTime !== undefined && inputs.maxShardCount !== undefined) {
+    return {
+      averageShardTime: inputs.averageShardTime,
+      maxShardCount: inputs.maxShardCount,
+    }
+  }
+  throw new Error(`Either shard-count or (average-shard-time-seconds and max-shard-count) must be set`)
 }
 
 const ensureTestFilesConsistency = async (shardsDirectory: string, workingTestFilenames: string[]) => {

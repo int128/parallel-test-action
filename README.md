@@ -139,7 +139,7 @@ jobs:
           test-report-artifact-name-prefix: test-report-
           test-report-branch: main
           max-shard-count: 10
-          max-shard-time-seconds: 300 # 5 minutes
+          average-shard-time-seconds: 300 # 5 minutes
 
   test:
     needs: split
@@ -297,8 +297,8 @@ Steps:
 | `test-report-artifact-name-prefix` | (required)     | Prefix of the test report artifact name  |
 | `test-report-branch`               | (required)     | Branch to find the test report artifacts |
 | `shard-count`                      | -              | Number of shards                         |
+| `average-shard-time-seconds`       | -              | Average time of a shard                  |
 | `max-shard-count`                  | -              | Maximum number of shards                 |
-| `max-shard-time-seconds`           | -              | Maximum time of a shard                  |
 | `shards-artifact-name`             | (\*1)          | Name of the shards artifact              |
 | `token`                            | (github.token) | GitHub token                             |
 

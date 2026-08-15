@@ -18,11 +18,11 @@ inputs:
   shard-count:
     description: Number of shards
     required: false
+  average-shard-time-seconds:
+    description: Average time of a shard
+    required: false
   max-shard-count:
     description: Maximum number of shards
-    required: false
-  max-shard-time-seconds:
-    description: Maximum time of a shard
     required: false
   shards-artifact-name:
     description: Name of the shards artifact

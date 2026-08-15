@@ -44,14 +44,24 @@ export type ShardSet = {
   workingTestFiles: WorkingTestFile[]
 }
 
+export type DistributeStrategy =
+  | {
+      shardCount: number
+    }
+  | {
+      averageShardTime: number
+      maxShardCount: number
+    }
+
 export const distributeTestFilesToShards = (
   workingTestFilenames: string[],
   reportedTestFiles: ReportedTestFile[],
-  shardCount: number,
+  strategy: DistributeStrategy,
 ): ShardSet => {
   const workingTestFiles = estimateWorkingTestFiles(workingTestFilenames, reportedTestFiles)
   workingTestFiles.sort(byTotalTimeDescending)
 
+  const shardCount = calculateShardCount(workingTestFiles, strategy)
   const shards = createShards(shardCount)
   for (const workingTestFile of workingTestFiles) {
     shards.sort(byTotalTimeOrCountAscending)
@@ -78,20 +88,6 @@ const byTotalTimeOrCountAscending = <E extends Shard>(a: E, b: E) => {
 
 const byId = <E extends { id: number }>(a: E, b: E) => a.id - b.id
 
-export const calculateShardCount = (
-  reportedTestFiles: ReportedTestFile[],
-  maxShardCount: number,
-  maxShardTime: number,
-): number => {
-  const totalTime = sumArray(reportedTestFiles.map((f) => f.totalTime))
-  if (totalTime === 0) {
-    return maxShardCount
-  }
-  return Math.ceil(totalTime / maxShardTime)
-}
-
-const sumArray = (arr: number[]): number => arr.reduce((acc, val) => acc + val, 0)
-
 const estimateWorkingTestFiles = (
   workingTestFilenames: string[],
   reportedTestFiles: ReportedTestFile[],
@@ -114,11 +110,28 @@ const estimateWorkingTestFiles = (
   return workingTestFiles
 }
 
-const averageOf = (a: number[]) => {
-  if (a.length === 0) {
+const calculateShardCount = (workingTestFiles: WorkingTestFile[], strategy: DistributeStrategy) => {
+  if ('shardCount' in strategy) {
+    return strategy.shardCount
+  }
+  const totalTime = sumArray(workingTestFiles.map((f) => f.totalTime))
+  if (totalTime === 0) {
+    return strategy.maxShardCount
+  }
+  const shardCount = Math.ceil(totalTime / strategy.averageShardTime)
+  if (shardCount > strategy.maxShardCount) {
+    return strategy.maxShardCount
+  }
+  return shardCount
+}
+
+const sumArray = (arr: number[]): number => arr.reduce((acc, val) => acc + val, 0)
+
+const averageOf = (arr: number[]) => {
+  if (arr.length === 0) {
     return 0
   }
-  return a.reduce((x, y) => x + y, 0) / a.length
+  return sumArray(arr) / arr.length
 }
 
 export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, shardsArtifactName: string) => {
