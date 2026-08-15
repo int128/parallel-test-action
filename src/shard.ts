@@ -34,11 +34,6 @@ class Shard {
   }
 }
 
-const createShards = (count: number): Shard[] =>
-  Array(count)
-    .fill(null)
-    .map((_, index) => new Shard(index + 1))
-
 export type ShardSet = {
   shards: Shard[]
   workingTestFiles: WorkingTestFile[]
@@ -62,7 +57,10 @@ export const distributeTestFilesToShards = (
   workingTestFiles.sort(byTotalTimeDescending)
 
   const shardCount = calculateShardCount(workingTestFiles, strategy)
-  const shards = createShards(shardCount)
+  const shards: Shard[] = []
+  for (let i = 0; i < shardCount; i++) {
+    shards.push(new Shard(i + 1))
+  }
   for (const workingTestFile of workingTestFiles) {
     shards.sort(byTotalTimeOrCountAscending)
     const leastShard = shards[0]
