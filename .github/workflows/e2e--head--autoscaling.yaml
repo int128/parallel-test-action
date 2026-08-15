@@ -1,4 +1,4 @@
-name: e2e-with-head
+name: e2e / head / autoscaling
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - '*.json'
       - '*.yaml'
       - '*.config.*'
-      - .github/workflows/e2e-with-head.yaml
+      - .github/workflows/e2e--head--autoscaling.yaml
 
 jobs:
   split:

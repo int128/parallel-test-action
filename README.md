@@ -150,7 +150,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
       # ...snip...
       - uses: actions/download-artifact@v8
         with:
