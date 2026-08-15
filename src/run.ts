@@ -7,7 +7,7 @@ import { downloadTestReportsFromLastWorkflowRuns } from './artifact.js'
 import type { Context } from './github.js'
 import { parseTestReportFiles } from './junitxml.js'
 import {
-  DistributeStrategy,
+  type DistributeStrategy,
   distributeTestFilesToShards,
   tryDownloadShardsIfAlreadyExists,
   verifyTestFiles,
