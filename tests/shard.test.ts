@@ -17,7 +17,9 @@ describe('distributeTestFilesToShards', () => {
       { filename: 'fixture4.test.ts', totalTime: 400, totalTestCases: 40 },
       { filename: 'fixture5.test.ts', totalTime: 500, totalTestCases: 50 },
     ]
-    const shardSet = distributeTestFilesToShards(workingTestFilenames, reportedTestFiles, 3)
+    const shardSet = distributeTestFilesToShards(workingTestFilenames, reportedTestFiles, {
+      shardCount: 3,
+    })
     expect(
       shardSet.shards.map((s) => ({
         testFiles: s.testFiles.map((f) => f.filename),
@@ -51,7 +53,9 @@ describe('distributeTestFilesToShards', () => {
       'fixture4.test.ts',
       'fixture5.test.ts',
     ]
-    const shardSet = distributeTestFilesToShards(workingTestFilenames, [], 3)
+    const shardSet = distributeTestFilesToShards(workingTestFilenames, [], {
+      shardCount: 3,
+    })
     expect(
       shardSet.shards.map((s) => ({
         testFileCount: s.testFiles.length,
