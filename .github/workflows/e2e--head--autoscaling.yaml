@@ -11,7 +11,7 @@ on:
       - .github/workflows/e2e--head--autoscaling.yaml
 
 jobs:
-  split:
+  distribute:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -40,10 +40,10 @@ jobs:
           average-shard-time-seconds: 0.1
 
   test:
-    needs: split
+    needs: distribute
     strategy:
       matrix:
-        shard: ${{ fromJson(needs.split.outputs.shards-json) }}
+        shard: ${{ fromJson(needs.distribute.outputs.shards-json) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -59,7 +59,7 @@ jobs:
       - id: download-shards
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ needs.split.outputs.shards-artifact-name }}
+          name: ${{ needs.distribute.outputs.shards-artifact-name }}
           path: ${{ runner.temp }}/shards
       - run: cat "$SHARD_FILE"
         env:
