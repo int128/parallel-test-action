@@ -126,7 +126,7 @@ You can generate a test report using [rspec_junit_formatter](https://github.com/
 When `average-shard-time-seconds` and `max-shard-count` are set, this action determines the shard count based on the average time of the shards.
 If no test report is given, this action distributes the test files to `max-shard-count` shards by the round-robin distribution.
 
-Here is an example workflow to distributes the test files up to 10 shards.
+Here is an example workflow to distribute the test files to average 5 minutes, up to 10 shards.
 
 ```yaml
 jobs:
