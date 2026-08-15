@@ -34,25 +34,33 @@ class Shard {
   }
 }
 
-const createShards = (count: number): Shard[] =>
-  Array(count)
-    .fill(null)
-    .map((_, index) => new Shard(index + 1))
-
 export type ShardSet = {
   shards: Shard[]
   workingTestFiles: WorkingTestFile[]
 }
 
+export type DistributeStrategy =
+  | {
+      shardCount: number
+    }
+  | {
+      averageShardTime: number
+      maxShardCount: number
+    }
+
 export const distributeTestFilesToShards = (
   workingTestFilenames: string[],
   reportedTestFiles: ReportedTestFile[],
-  shardCount: number,
+  strategy: DistributeStrategy,
 ): ShardSet => {
   const workingTestFiles = estimateWorkingTestFiles(workingTestFilenames, reportedTestFiles)
   workingTestFiles.sort(byTotalTimeDescending)
 
-  const shards = createShards(shardCount)
+  const shardCount = calculateShardCount(workingTestFiles, strategy)
+  const shards: Shard[] = []
+  for (let i = 0; i < shardCount; i++) {
+    shards.push(new Shard(i + 1))
+  }
   for (const workingTestFile of workingTestFiles) {
     shards.sort(byTotalTimeOrCountAscending)
     const leastShard = shards[0]
@@ -100,11 +108,28 @@ const estimateWorkingTestFiles = (
   return workingTestFiles
 }
 
-const averageOf = (a: number[]) => {
-  if (a.length === 0) {
+const calculateShardCount = (workingTestFiles: WorkingTestFile[], strategy: DistributeStrategy) => {
+  if ('shardCount' in strategy) {
+    return strategy.shardCount
+  }
+  const totalTime = sumArray(workingTestFiles.map((f) => f.totalTime))
+  if (totalTime === 0) {
+    return strategy.maxShardCount
+  }
+  const shardCount = Math.ceil(totalTime / strategy.averageShardTime)
+  if (shardCount > strategy.maxShardCount) {
+    return strategy.maxShardCount
+  }
+  return shardCount
+}
+
+const sumArray = (arr: number[]): number => arr.reduce((acc, val) => acc + val, 0)
+
+const averageOf = (arr: number[]) => {
+  if (arr.length === 0) {
     return 0
   }
-  return a.reduce((x, y) => x + y, 0) / a.length
+  return sumArray(arr) / arr.length
 }
 
 export const tryDownloadShardsIfAlreadyExists = async (shardsDirectory: string, shardsArtifactName: string) => {

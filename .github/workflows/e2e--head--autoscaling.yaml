@@ -1,0 +1,74 @@
+name: e2e / head / autoscaling
+
+on:
+  pull_request:
+    paths:
+      - src/**
+      - tests/**
+      - '*.json'
+      - '*.yaml'
+      - '*.config.*'
+      - .github/workflows/e2e--head--autoscaling.yaml
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      shards-artifact-name: ${{ steps.parallel-test.outputs.shards-artifact-name }}
+      shards-json: ${{ steps.parallel-test.outputs.shards-json }}
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - run: npm install -g corepack
+      - run: corepack enable
+      - run: pnpm i
+      - run: pnpm build
+      - name: Run int128/parallel-test-action
+        id: parallel-test
+        uses: ./
+        with:
+          test-files: 'tests/**/*.test.ts'
+          test-report-branch: ${{ github.event.pull_request.head.ref }}
+          test-report-artifact-name-prefix: test-report-
+          max-shard-count: 3
+          average-shard-time-seconds: 0.1
+
+  test:
+    needs: distribute
+    strategy:
+      matrix:
+        shard: ${{ fromJson(needs.distribute.outputs.shards-json) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - run: npm install -g corepack
+      - run: corepack enable
+      - run: pnpm i
+      - id: download-shards
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.distribute.outputs.shards-artifact-name }}
+          path: ${{ runner.temp }}/shards
+      - run: cat "$SHARD_FILE"
+        env:
+          SHARD_FILE: ${{ steps.download-shards.outputs.download-path }}/${{ matrix.shard.id }}
+      - run: xargs pnpm run test < "$SHARD_FILE"
+        env:
+          SHARD_FILE: ${{ steps.download-shards.outputs.download-path }}/${{ matrix.shard.id }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-report-${{ matrix.shard.id }}
+          path: junit.xml
+          if-no-files-found: error

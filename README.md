@@ -64,7 +64,7 @@ jobs:
         shard-id: [1, 2, 3]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: int128/parallel-test-action@v1
         id: parallel-test
         with:
@@ -77,7 +77,7 @@ jobs:
       - run: xargs pnpm run test -- < "$SHARD_FILE"
         env:
           SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: test-report-${{ matrix.shard-id }}
           path: junit.xml
@@ -100,7 +100,7 @@ jobs:
         shard-id: [1, 2, 3]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: int128/parallel-test-action@v1
         id: parallel-test
         with:
@@ -113,13 +113,62 @@ jobs:
       - run: xargs bundle exec rspec --format RspecJunitFormatter --out rspec.xml < "$SHARD_FILE"
         env:
           SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: test-report-${{ matrix.shard-id }}
           path: rspec.xml
 ```
 
 You can generate a test report using [rspec_junit_formatter](https://github.com/sj26/rspec_junit_formatter).
+
+### Autoscaling
+
+When `average-shard-time-seconds` and `max-shard-count` are set, this action determines the shard count based on the average time of the shards.
+If no test report is given, this action distributes the test files to `max-shard-count` shards by the round-robin distribution.
+
+Here is an example workflow to distribute the test files to average 5 minutes, up to 10 shards.
+
+```yaml
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    outputs:
+      shards-artifact-name: ${{ steps.parallel-test.outputs.shards-artifact-name }}
+      shards-json: ${{ steps.parallel-test.outputs.shards-json }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: int128/parallel-test-action@v1
+        id: parallel-test
+        with:
+          test-files: "tests/**/*.test.ts"
+          test-report-artifact-name-prefix: test-report-
+          test-report-branch: main
+          average-shard-time-seconds: 300 # 5 minutes
+          max-shard-count: 10
+
+  test:
+    needs: distribute
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.distribute.outputs.shards-json) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # ...snip...
+      - id: download-shards
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.distribute.outputs.shards-artifact-name }}
+          path: ${{ runner.temp }}/shards
+      - run: xargs pnpm run test -- < "$SHARD_FILE"
+        env:
+          SHARD_FILE: ${{ steps.download-shards.outputs.download-path }}/${{ matrix.shard.id }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: test-report-${{ matrix.shard-id }}
+          path: junit.xml
+```
 
 ## How it works
 
@@ -211,7 +260,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # (1) Checkout the repository.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # (2) Distribute the test files to the shards.
       - uses: int128/parallel-test-action@v1
@@ -228,7 +277,7 @@ jobs:
           SHARD_FILE: ${{ steps.parallel-test.outputs.shards-directory }}/${{ matrix.shard-id }}
 
       # (4) Upload the test report as an artifact.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: test-report-${{ matrix.shard-id }}
           path: junit.xml
@@ -254,19 +303,26 @@ Steps:
 | `test-files`                       | (required)     | Glob pattern of test files               |
 | `test-report-artifact-name-prefix` | (required)     | Prefix of the test report artifact name  |
 | `test-report-branch`               | (required)     | Branch to find the test report artifacts |
-| `shard-count`                      | (required)     | Number of shards                         |
-| `shards-artifact-name`             | (\*1)          | Name of the shards artifact              |
+| `shard-count`                      | (\*1)          | Number of shards                         |
+| `average-shard-time-seconds`       | (\*1)          | Average time of a shard                  |
+| `max-shard-count`                  | (\*1)          | Maximum number of shards                 |
+| `shards-artifact-name`             | (\*2)          | Name of the shards artifact              |
 | `token`                            | (github.token) | GitHub token                             |
 
-(\*1) The value of `shards-artifact-name` must be same in the parallel jobs.
+(\*1) For the fixed shards, `shard-count` must be set.
+For the autoscaling shards, both `average-shard-time-seconds` and `max-shard-count` must be set.
+
+(\*2) The value of `shards-artifact-name` must be same in the parallel jobs.
 The default value is `parallel-test-shards--${{ github.job }}`.
 For above example, the shards artifact is uploaded as `parallel-test-shards--test`.
 
 ### Outputs
 
-| Name               | Description                        |
-| ------------------ | ---------------------------------- |
-| `shards-directory` | Directory to store the shard files |
+| Name                   | Description                        |
+| ---------------------- | ---------------------------------- |
+| `shards-directory`     | Directory to store the shard files |
+| `shards-artifact-name` | Name of the shards artifact        |
+| `shards-json`          | JSON array of the shards           |
 
 This action writes the shard files to the temporary directory.
 The shards directory looks like:
