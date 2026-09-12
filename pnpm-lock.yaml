@@ -291,11 +291,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@bufbuild/protobuf@2.14.1':
-    resolution: {integrity: sha512-agRJn3+EJDUe8AvxTx/LnHA/GErvLE62pSaSk7+MwFOtOv8eWBu/qCq2qoZjBjVZ3C2aiFJCveuSs17KMkYGOw==}
+  '@bufbuild/protobuf@2.15.0':
+    resolution: {integrity: sha512-DAheWUkVr/SJTWCc+lg9dhY0eN4SaWlf4+bG1KzHeXbnqt0AfB/NX0Z+VunGlM1ki1B4zVvye27MpKh/svySUA==}
 
-  '@bufbuild/protoplugin@2.14.1':
-    resolution: {integrity: sha512-oddqHkmUlBSo1TgswPW6hzrP/3nxMIdKUMcB6/NSY/oUkepDV7SealCZlE0ZxhLRIgmvDSuNWOb0HEKfsWPJww==}
+  '@bufbuild/protoplugin@2.15.0':
+    resolution: {integrity: sha512-vZhRoqB/jTHATqItRvJQf1zbxdrGRRhiusGty4+lKcfEFODG0PMXky2Ezv4WHHS6oSxq+5qShITuE7K1/82SuQ==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -736,8 +736,8 @@ packages:
     resolution: {integrity: sha512-6FqVXeETqWPoGcfzrXb37E50NP0LXT8kAMu5ooZayhWWdgEY4lBEEcbQNXtkuKQsGduxiIcI4gOTsxTmuq/bSg==}
     engines: {node: '>= 14'}
 
-  content-type@3.0.0:
-    resolution: {integrity: sha512-AIi5H6p0xk5uknXcN3/rmhP8jgp69OfSe/JuKiQAFprJ7UGw7mwj7m4XcmDzlrnJDG+cGpphAINGdU3g3g7kDw==}
+  content-type@3.1.0:
+    resolution: {integrity: sha512-z26wZR7iXahgpSK7XgnB4IbRVmUNSODvsX9qC9TAru7AcWGiqn5YKy+OH3PLRrwyAnewykKhCqnD+VV3a8uT8Q==}
     engines: {node: '>=22'}
 
   core-util-is@1.0.3:
@@ -1501,11 +1501,11 @@ snapshots:
   '@biomejs/cli-win32-x64@2.5.12':
     optional: true
 
-  '@bufbuild/protobuf@2.14.1': {}
+  '@bufbuild/protobuf@2.15.0': {}
 
-  '@bufbuild/protoplugin@2.14.1':
+  '@bufbuild/protoplugin@2.15.0':
     dependencies:
-      '@bufbuild/protobuf': 2.14.1
+      '@bufbuild/protobuf': 2.15.0
       '@typescript/vfs': 1.6.4(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -1604,7 +1604,7 @@ snapshots:
       '@octokit/endpoint': 11.0.5
       '@octokit/request-error': 7.1.2
       '@octokit/types': 18.0.0
-      content-type: 3.0.0
+      content-type: 3.1.0
       json-with-bigint: 3.5.12
       universal-user-agent: 7.0.3
 
@@ -1651,8 +1651,8 @@ snapshots:
 
   '@protobuf-ts/plugin@2.11.1':
     dependencies:
-      '@bufbuild/protobuf': 2.14.1
-      '@bufbuild/protoplugin': 2.14.1
+      '@bufbuild/protobuf': 2.15.0
+      '@bufbuild/protoplugin': 2.15.0
       '@protobuf-ts/protoc': 2.11.1
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
@@ -1887,7 +1887,7 @@ snapshots:
       normalize-path: 3.0.0
       readable-stream: 4.7.0
 
-  content-type@3.0.0: {}
+  content-type@3.1.0: {}
 
   core-util-is@1.0.3: {}
 
